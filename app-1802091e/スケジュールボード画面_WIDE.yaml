@@ -1,0 +1,1361 @@
+- wbRoot:
+    Control: GroupContainer@1.5.0
+    Variant: ManualLayout
+    Properties:
+      Fill: =RGBA(245, 246, 250, 1)
+      Height: =Parent.Height
+      Width: =Parent.Width
+    Children:
+      - wbDateKey:
+          Control: ModernText@1.0.0
+          Properties:
+            Height: =10
+            Text: =Text(Coalesce(varSbDate, Today()), "yyyy-mm-dd")
+            Visible: =false
+            Width: =10
+      - wbBranchKey:
+          Control: ModernText@1.0.0
+          Properties:
+            Height: =10
+            Text: =Coalesce(wbBranch.Selected.Value, First(Distinct(社員, ボード)).Value)
+            Visible: =false
+            Width: =10
+      - wbHeader:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            Fill: =RGBA(59, 89, 152, 1)
+            Height: =60
+            Width: =Parent.Width
+          Children:
+            - wbBranch:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="拠点"
+                  Default: |-
+                    ={Value: Coalesce(varSbBranch, Trim(Text(LookUp(社員, User().Email in メール.Email).ボード)), First(Distinct(社員, ボード)).Value)}
+                  Height: =44
+                  ItemDisplayText: =ThisItem.Value
+                  Items: =Distinct(社員, ボード)
+                  Width: =450
+                  X: =150
+                  Y: =8
+            - wbInfo:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =44
+                  Size: =17
+                  Text: ="計 " & CountRows(Filter(社員, ボード = wbBranchKey.Text)) & " 名"
+                  Width: =110
+                  Wrap: =false
+                  X: =wbBranch.X + wbBranch.Width + 12
+                  Y: =8
+            - wbPrev:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =44
+                  OnSelect: =Set(varSbDate, DateAdd(Coalesce(varSbDate, Today()), -1, TimeUnit.Days))
+                  Size: =18
+                  Text: ="◀ "
+                  Width: =52
+                  X: =wbDateLabel.X - Self.Width - 6
+                  Y: =8
+            - wbDateLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =Parent.Height
+                  Size: =24
+                  Text: =Text(Coalesce(varSbDate, Today()), "yyyy/mm/dd (ddd)")
+                  Width: =260
+                  X: |-
+                    =With(
+                        {
+                            leftEdge: wbInfo.X + wbInfo.Width + 12,
+                            rightEdge: wbMenuBtn.X - 12,
+                            groupWidth: wbPrev.Width + 6 + Self.Width + 6 + wbNext.Width + 12 + wbToday.Width + 12 + wbRefresh.Width
+                        },
+                        leftEdge + (rightEdge - leftEdge - groupWidth) / 2 + wbPrev.Width + 6
+                    )
+            - wbNext:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =44
+                  OnSelect: =Set(varSbDate, DateAdd(Coalesce(varSbDate, Today()), 1, TimeUnit.Days))
+                  Size: =18
+                  Text: =" ▶"
+                  Width: =52
+                  X: =wbDateLabel.X + wbDateLabel.Width + 6
+                  Y: =8
+            - wbToday:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =44
+                  OnSelect: =Set(varSbDate, Today())
+                  Size: =17
+                  Text: ="今日"
+                  Width: =84
+                  X: =wbNext.X + wbNext.Width + 12
+                  Y: =8
+            - wbRefresh:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =44
+                  Icon: ="ArrowSync"
+                  IconStyle: =IconStyle.Filled
+                  Layout: =ButtonLayout.IconOnly
+                  OnSelect: |-
+                    =Refresh(予定);
+                    Refresh(社員)
+                  Size: =26
+                  Text: =""
+                  Width: =44
+                  X: =wbToday.X + wbToday.Width + 12
+                  Y: =8
+            - wbLogo:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Height: =52
+                  Width: =130
+                  X: =12
+                  Y: =4
+                Children:
+                  - wbLogoImg1:
+                      Control: Image@2.2.3
+                      Properties:
+                        Height: =52
+                        Image: ='logo_dhf1 (1)'
+                        Width: =44
+                  - wbLogoImg2:
+                      Control: Image@2.2.3
+                      Properties:
+                        Height: =52
+                        Image: =logo_dhf2
+                        Width: =72
+                        X: =50
+            - wbMenuBtn:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =44
+                  Icon: ="Navigation"
+                  IconStyle: =IconStyle.Filled
+                  Layout: =ButtonLayout.IconOnly
+                  OnSelect: =Set(varSbMenuShow, !varSbMenuShow)
+                  Size: =26
+                  Text: =""
+                  Width: =56
+                  X: =Parent.Width - Self.Width - 12
+                  Y: =8
+      - wbMenu:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Regular
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =56
+            Visible: =varSbMenuShow
+            Width: =220
+            X: =Parent.Width - Self.Width - 12
+            Y: =62
+          Children:
+            - wbMenuBulletin:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Align: =Align.Left
+                  Appearance: =ButtonAppearance.Subtle
+                  Height: =Parent.Height
+                  OnSelect: =Set(varSbMenuShow, false)
+                  Size: =17
+                  Text: ="掲示板"
+                  Width: =Parent.Width
+      - wb0H1:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="名前"
+            Width: =110
+            Wrap: =false
+            X: =wb0Col.X
+            Y: =60
+      - wb0H3:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="行先"
+            Width: =wb0Col.Width - 174
+            Wrap: =false
+            X: =wb0Col.X + 110
+            Y: =60
+      - wb0H4:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="戻り"
+            Width: =64
+            Wrap: =false
+            X: =wb0Col.X + wb0Col.Width - 64
+            Y: =60
+      - wb0Col:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =Parent.Height - 100
+            Items: |-
+              =With(
+                  {emp: Filter(社員, ボード = wbBranchKey.Text && Value(列) = 1), sc: Filter(予定, 日付 = wbDateKey.Text)},
+                  With(
+                      {d: Sort(ForAll(Distinct(emp, 部署) As x, {部署: x.Value, deptOrder: Min(Filter(emp, 部署 = x.Value), Value(部署順))}), deptOrder, SortOrder.Ascending)},
+                      With(
+                          {cd: ForAll(Sequence(CountRows(d)) As s, {dept: Index(d, s.Value).部署, n: CountRows(Filter(emp, 部署 = Index(d, s.Value).部署))})},
+                          With(
+                              {cs: ForAll(Sequence(CountRows(cd)) As j, {dept: Index(cd, j.Value).dept, n: Index(cd, j.Value).n, st: Coalesce(Sum(FirstN(cd, j.Value - 1), n + 1), 0)})},
+                              ForAll(
+                                  Sequence(Coalesce(Sum(cs, n + 1), 0)) As q,
+                                  With(
+                                      {g: LookUp(cs, q.Value > st && q.Value <= st + n + 1)},
+                                      If(
+                                          q.Value - g.st = 1,
+                                          {kind: "h", dept: g.dept, name: "", wt: "", share: "", ret: "", isDeptEnd: g.n = 0, upd: DateTime(2000, 1, 1, 0, 0, 0)},
+                                          With(
+                                              {pp: Index(Sort(Filter(emp, 部署 = g.dept), Value(表示順)), q.Value - g.st - 1)},
+                                              With(
+                                                  {r: LookUp(sc, Title = pp.Title)},
+                                                  {kind: "p", dept: g.dept, name: Text(pp.Title), wt: Text(r.勤務区分), share: Text(r.共有内容), ret: Text(r.帰社時間), isDeptEnd: q.Value = g.st + g.n + 1, upd: r.Modified}
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                          )
+                      )
+                  )
+              )
+            ShowScrollbar: =false
+            TemplatePadding: =0
+            TemplateSize: =42
+            Width: =(Parent.Width - 56) / 3
+            X: =16 + 0 * ((Parent.Width - 56) / 3 + 12)
+            Y: =92
+          Children:
+            - wb0HdrText:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(255, 255, 255, 1)
+                  Fill: =RGBA(59, 89, 152, 1)
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =Parent.TemplateHeight
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =ThisItem.dept
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+                  Wrap: =false
+            - wb0HdrTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(255, 255, 0, 0.3)
+                  OnSelect: |-
+                    =Set(varGsBranch, wbBranchKey.Text);
+                    Set(varGsDept, Text(ThisItem.dept));
+                    Navigate(グループスケジュール);
+                    Reset(gsBranch);
+                    Reset(gsDept)
+                  PressedFill: =RGBA(255, 255, 255, 0.3)
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+            - wb0RowBg:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: |-
+                    =If(
+                        !IsBlank(ThisItem.upd) && DateDiff(ThisItem.upd, Coalesce(varSbNow, Now()), TimeUnit.Minutes) < 2, RGBA(255, 241, 118, 1),
+                        Find("休暇", ThisItem.wt) > 0 || Find("休業", ThisItem.wt) > 0, RGBA(252, 228, 236, 1),
+                        Find("出張", ThisItem.wt) > 0 || Find("外出", ThisItem.wt) > 0 || Find("テレワーク", ThisItem.wt) > 0, RGBA(236, 236, 236, 1),
+                        RGBA(255, 255, 255, 1)
+                    )
+                  Height: =Parent.TemplateHeight - 1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - wb0Sep:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(220, 224, 232, 1)
+                  Height: =1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - 1
+            - wb0Name:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(21, 101, 192, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: =ThisItem.name
+                  Visible: =ThisItem.kind = "p"
+                  Width: =108
+                  Wrap: =false
+            - wb0BadgeBg:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Fill: =ColorValue(Coalesce(LookUp(予定選択肢, Title = wbBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).背景色, "#E8EAF6"))
+                  Height: =26
+                  RadiusBottomLeft: =6
+                  RadiusBottomRight: =6
+                  RadiusTopLeft: =6
+                  RadiusTopRight: =6
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =76
+                  X: =110
+                  Y: =(Parent.TemplateHeight - Self.Height) / 2
+            - wb0Badge:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =ColorValue(Coalesce(LookUp(予定選択肢, Title = wbBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).文字色, "#1F2A44"))
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: =ThisItem.wt
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =76
+                  Wrap: =false
+                  X: =110
+                  Y: =(Parent.TemplateHeight - Self.Height) / 2
+            - wb0Share:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Segoe UI'
+                  Height: =Parent.TemplateHeight - 1
+                  LineHeight: =1
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =10
+                  Text: =ThisItem.share
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth - 264
+                  X: =196
+            - wb0Ret:
+                Control: ModernText@1.0.0
+                Properties:
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: =ThisItem.ret
+                  Visible: =ThisItem.kind = "p"
+                  Width: =64
+                  X: =Parent.TemplateWidth - 66
+            - wb0Tap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(59, 89, 152, 0.12)
+                  OnSelect: |-
+                    =Set(varSbEdit, ThisItem);
+                    Set(varSbShow, true);
+                    Reset(wbEdWt);
+                    Reset(wbEdShare);
+                    Reset(wbEdRet)
+                  PressedFill: =RGBA(59, 89, 152, 0.25)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - wb0NameTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(25, 118, 210, 0.15)
+                  OnSelect: |-
+                    =Set(varSbUserName, ThisItem.name);
+                    Set(varSbUserShow, true)
+                  PressedFill: =RGBA(25, 118, 210, 0.3)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =108
+            - wb0DeptLeft:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =Parent.TemplateHeight
+                  Visible: =!IsBlank(ThisItem.dept)
+                  Width: =1
+            - wb0DeptRight:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =Parent.TemplateHeight
+                  Visible: =!IsBlank(ThisItem.dept)
+                  Width: =1
+                  X: =Parent.TemplateWidth - Self.Width
+            - wb0DeptTop:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =1
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+            - wb0DeptBottom:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =1
+                  Visible: =ThisItem.isDeptEnd
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - Self.Height
+      - wb1H1:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="名前"
+            Width: =110
+            Wrap: =false
+            X: =wb1Col.X
+            Y: =60
+      - wb1H3:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="行先"
+            Width: =wb1Col.Width - 174
+            Wrap: =false
+            X: =wb1Col.X + 110
+            Y: =60
+      - wb1H4:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="戻り"
+            Width: =64
+            Wrap: =false
+            X: =wb1Col.X + wb1Col.Width - 64
+            Y: =60
+      - wb1Col:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =Parent.Height - 100
+            Items: |-
+              =With(
+                  {emp: Filter(社員, ボード = wbBranchKey.Text && Value(列) = 2), sc: Filter(予定, 日付 = wbDateKey.Text)},
+                  With(
+                      {d: Sort(ForAll(Distinct(emp, 部署) As x, {部署: x.Value, deptOrder: Min(Filter(emp, 部署 = x.Value), Value(部署順))}), deptOrder, SortOrder.Ascending)},
+                      With(
+                          {cd: ForAll(Sequence(CountRows(d)) As s, {dept: Index(d, s.Value).部署, n: CountRows(Filter(emp, 部署 = Index(d, s.Value).部署))})},
+                          With(
+                              {cs: ForAll(Sequence(CountRows(cd)) As j, {dept: Index(cd, j.Value).dept, n: Index(cd, j.Value).n, st: Coalesce(Sum(FirstN(cd, j.Value - 1), n + 1), 0)})},
+                              ForAll(
+                                  Sequence(Coalesce(Sum(cs, n + 1), 0)) As q,
+                                  With(
+                                      {g: LookUp(cs, q.Value > st && q.Value <= st + n + 1)},
+                                      If(
+                                          q.Value - g.st = 1,
+                                          {kind: "h", dept: g.dept, name: "", wt: "", share: "", ret: "", isDeptEnd: g.n = 0, upd: DateTime(2000, 1, 1, 0, 0, 0)},
+                                          With(
+                                              {pp: Index(Sort(Filter(emp, 部署 = g.dept), Value(表示順)), q.Value - g.st - 1)},
+                                              With(
+                                                  {r: LookUp(sc, Title = pp.Title)},
+                                                  {kind: "p", dept: g.dept, name: Text(pp.Title), wt: Text(r.勤務区分), share: Text(r.共有内容), ret: Text(r.帰社時間), isDeptEnd: q.Value = g.st + g.n + 1, upd: r.Modified}
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                          )
+                      )
+                  )
+              )
+            ShowScrollbar: =false
+            TemplatePadding: =0
+            TemplateSize: =42
+            Width: =(Parent.Width - 56) / 3
+            X: =16 + 1 * ((Parent.Width - 56) / 3 + 12)
+            Y: =92
+          Children:
+            - wb1HdrText:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(255, 255, 255, 1)
+                  Fill: =RGBA(59, 89, 152, 1)
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =Parent.TemplateHeight
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =ThisItem.dept
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+                  Wrap: =false
+            - wb1HdrTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(255, 255, 0, 0.3)
+                  OnSelect: |-
+                    =Set(varGsBranch, wbBranchKey.Text);
+                    Set(varGsDept, Text(ThisItem.dept));
+                    Navigate(グループスケジュール);
+                    Reset(gsBranch);
+                    Reset(gsDept)
+                  PressedFill: =RGBA(255, 255, 255, 0.3)
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+            - wb1RowBg:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: |-
+                    =If(
+                        !IsBlank(ThisItem.upd) && DateDiff(ThisItem.upd, Coalesce(varSbNow, Now()), TimeUnit.Minutes) < 2, RGBA(255, 241, 118, 1),
+                        Find("休暇", ThisItem.wt) > 0 || Find("休業", ThisItem.wt) > 0, RGBA(252, 228, 236, 1),
+                        Find("出張", ThisItem.wt) > 0 || Find("外出", ThisItem.wt) > 0 || Find("テレワーク", ThisItem.wt) > 0, RGBA(236, 236, 236, 1),
+                        RGBA(255, 255, 255, 1)
+                    )
+                  Height: =Parent.TemplateHeight - 1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - wb1Sep:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(220, 224, 232, 1)
+                  Height: =1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - 1
+            - wb1Name:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(21, 101, 192, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: =ThisItem.name
+                  Visible: =ThisItem.kind = "p"
+                  Width: =108
+                  Wrap: =false
+            - wb1BadgeBg:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Fill: =ColorValue(Coalesce(LookUp(予定選択肢, Title = wbBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).背景色, "#E8EAF6"))
+                  Height: =26
+                  RadiusBottomLeft: =6
+                  RadiusBottomRight: =6
+                  RadiusTopLeft: =6
+                  RadiusTopRight: =6
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =76
+                  X: =110
+                  Y: =(Parent.TemplateHeight - Self.Height) / 2
+            - wb1Badge:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =ColorValue(Coalesce(LookUp(予定選択肢, Title = wbBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).文字色, "#1F2A44"))
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: =ThisItem.wt
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =76
+                  Wrap: =false
+                  X: =110
+                  Y: =(Parent.TemplateHeight - Self.Height) / 2
+            - wb1Share:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Segoe UI'
+                  Height: =Parent.TemplateHeight - 1
+                  LineHeight: =1
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =10
+                  Text: =ThisItem.share
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth - 264
+                  X: =196
+            - wb1Ret:
+                Control: ModernText@1.0.0
+                Properties:
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: =ThisItem.ret
+                  Visible: =ThisItem.kind = "p"
+                  Width: =64
+                  X: =Parent.TemplateWidth - 66
+            - wb1Tap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(59, 89, 152, 0.12)
+                  OnSelect: |-
+                    =Set(varSbEdit, ThisItem);
+                    Set(varSbShow, true);
+                    Reset(wbEdWt);
+                    Reset(wbEdShare);
+                    Reset(wbEdRet)
+                  PressedFill: =RGBA(59, 89, 152, 0.25)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - wb1NameTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(25, 118, 210, 0.15)
+                  OnSelect: |-
+                    =Set(varSbUserName, ThisItem.name);
+                    Set(varSbUserShow, true)
+                  PressedFill: =RGBA(25, 118, 210, 0.3)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =108
+            - wb1DeptLeft:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =Parent.TemplateHeight
+                  Visible: =!IsBlank(ThisItem.dept)
+                  Width: =1
+            - wb1DeptRight:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =Parent.TemplateHeight
+                  Visible: =!IsBlank(ThisItem.dept)
+                  Width: =1
+                  X: =Parent.TemplateWidth - Self.Width
+            - wb1DeptTop:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =1
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+            - wb1DeptBottom:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =1
+                  Visible: =ThisItem.isDeptEnd
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - Self.Height
+      - wb2H1:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="名前"
+            Width: =110
+            Wrap: =false
+            X: =wb2Col.X
+            Y: =60
+      - wb2H3:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="行先"
+            Width: =wb2Col.Width - 174
+            Wrap: =false
+            X: =wb2Col.X + 110
+            Y: =60
+      - wb2H4:
+          Control: ModernText@1.0.0
+          Properties:
+            Color: =RGBA(0, 18, 107, 1)
+            Fill: =RGBA(232, 244, 217, 1)
+            Height: =32
+            Size: =14
+            Text: ="戻り"
+            Width: =64
+            Wrap: =false
+            X: =wb2Col.X + wb2Col.Width - 64
+            Y: =60
+      - wb2Col:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =Parent.Height - 100
+            Items: |-
+              =With(
+                  {emp: Filter(社員, ボード = wbBranchKey.Text && Value(列) = 3), sc: Filter(予定, 日付 = wbDateKey.Text)},
+                  With(
+                      {d: Sort(ForAll(Distinct(emp, 部署) As x, {部署: x.Value, deptOrder: Min(Filter(emp, 部署 = x.Value), Value(部署順))}), deptOrder, SortOrder.Ascending)},
+                      With(
+                          {cd: ForAll(Sequence(CountRows(d)) As s, {dept: Index(d, s.Value).部署, n: CountRows(Filter(emp, 部署 = Index(d, s.Value).部署))})},
+                          With(
+                              {cs: ForAll(Sequence(CountRows(cd)) As j, {dept: Index(cd, j.Value).dept, n: Index(cd, j.Value).n, st: Coalesce(Sum(FirstN(cd, j.Value - 1), n + 1), 0)})},
+                              ForAll(
+                                  Sequence(Coalesce(Sum(cs, n + 1), 0)) As q,
+                                  With(
+                                      {g: LookUp(cs, q.Value > st && q.Value <= st + n + 1)},
+                                      If(
+                                          q.Value - g.st = 1,
+                                          {kind: "h", dept: g.dept, name: "", wt: "", share: "", ret: "", isDeptEnd: g.n = 0, upd: DateTime(2000, 1, 1, 0, 0, 0)},
+                                          With(
+                                              {pp: Index(Sort(Filter(emp, 部署 = g.dept), Value(表示順)), q.Value - g.st - 1)},
+                                              With(
+                                                  {r: LookUp(sc, Title = pp.Title)},
+                                                  {kind: "p", dept: g.dept, name: Text(pp.Title), wt: Text(r.勤務区分), share: Text(r.共有内容), ret: Text(r.帰社時間), isDeptEnd: q.Value = g.st + g.n + 1, upd: r.Modified}
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                          )
+                      )
+                  )
+              )
+            ShowScrollbar: =false
+            TemplatePadding: =0
+            TemplateSize: =42
+            Width: =(Parent.Width - 56) / 3
+            X: =16 + 2 * ((Parent.Width - 56) / 3 + 12)
+            Y: =92
+          Children:
+            - wb2HdrText:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(255, 255, 255, 1)
+                  Fill: =RGBA(59, 89, 152, 1)
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =Parent.TemplateHeight
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =ThisItem.dept
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+                  Wrap: =false
+            - wb2HdrTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(255, 255, 0, 0.3)
+                  OnSelect: |-
+                    =Set(varGsBranch, wbBranchKey.Text);
+                    Set(varGsDept, Text(ThisItem.dept));
+                    Navigate(グループスケジュール);
+                    Reset(gsBranch);
+                    Reset(gsDept)
+                  PressedFill: =RGBA(255, 255, 255, 0.3)
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+            - wb2RowBg:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: |-
+                    =If(
+                        !IsBlank(ThisItem.upd) && DateDiff(ThisItem.upd, Coalesce(varSbNow, Now()), TimeUnit.Minutes) < 2, RGBA(255, 241, 118, 1),
+                        Find("休暇", ThisItem.wt) > 0 || Find("休業", ThisItem.wt) > 0, RGBA(252, 228, 236, 1),
+                        Find("出張", ThisItem.wt) > 0 || Find("外出", ThisItem.wt) > 0 || Find("テレワーク", ThisItem.wt) > 0, RGBA(236, 236, 236, 1),
+                        RGBA(255, 255, 255, 1)
+                    )
+                  Height: =Parent.TemplateHeight - 1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - wb2Sep:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(220, 224, 232, 1)
+                  Height: =1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - 1
+            - wb2Name:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(21, 101, 192, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: =ThisItem.name
+                  Visible: =ThisItem.kind = "p"
+                  Width: =108
+                  Wrap: =false
+            - wb2BadgeBg:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Fill: =ColorValue(Coalesce(LookUp(予定選択肢, Title = wbBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).背景色, "#E8EAF6"))
+                  Height: =26
+                  RadiusBottomLeft: =6
+                  RadiusBottomRight: =6
+                  RadiusTopLeft: =6
+                  RadiusTopRight: =6
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =76
+                  X: =110
+                  Y: =(Parent.TemplateHeight - Self.Height) / 2
+            - wb2Badge:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =ColorValue(Coalesce(LookUp(予定選択肢, Title = wbBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).文字色, "#1F2A44"))
+                  FontWeight: =FontWeight.Semibold
+                  Height: =34
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: =ThisItem.wt
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =76
+                  Wrap: =false
+                  X: =110
+                  Y: =(Parent.TemplateHeight - Self.Height) / 2
+            - wb2Share:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Segoe UI'
+                  Height: =Parent.TemplateHeight - 1
+                  LineHeight: =1
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =10
+                  Text: =ThisItem.share
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth - 264
+                  X: =196
+            - wb2Ret:
+                Control: ModernText@1.0.0
+                Properties:
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =13
+                  Text: =ThisItem.ret
+                  Visible: =ThisItem.kind = "p"
+                  Width: =64
+                  X: =Parent.TemplateWidth - 66
+            - wb2Tap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(59, 89, 152, 0.12)
+                  OnSelect: |-
+                    =Set(varSbEdit, ThisItem);
+                    Set(varSbShow, true);
+                    Reset(wbEdWt);
+                    Reset(wbEdShare);
+                    Reset(wbEdRet)
+                  PressedFill: =RGBA(59, 89, 152, 0.25)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - wb2NameTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(25, 118, 210, 0.15)
+                  OnSelect: |-
+                    =Set(varSbUserName, ThisItem.name);
+                    Set(varSbUserShow, true)
+                  PressedFill: =RGBA(25, 118, 210, 0.3)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =108
+            - wb2DeptLeft:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =Parent.TemplateHeight
+                  Visible: =!IsBlank(ThisItem.dept)
+                  Width: =1
+            - wb2DeptRight:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =Parent.TemplateHeight
+                  Visible: =!IsBlank(ThisItem.dept)
+                  Width: =1
+                  X: =Parent.TemplateWidth - Self.Width
+            - wb2DeptTop:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =1
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+            - wb2DeptBottom:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(160, 170, 182, 1)
+                  Height: =1
+                  Visible: =ThisItem.isDeptEnd
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - Self.Height
+      - wbOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.35)
+            Height: =Parent.Height
+            OnSelect: =Set(varSbShow, false)
+            Visible: =varSbShow
+            Width: =Parent.Width
+      - wbPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =440
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =varSbShow
+            Width: =520
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - wbEdHead:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =48
+                  Size: =22
+                  Text: =varSbEdit.name & " 行先編集"
+                  Width: =480
+                  X: =20
+                  Y: =8
+            - wbEdL1:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =30
+                  Size: =15
+                  Text: ="出社時間／共有項目"
+                  Width: =480
+                  X: =20
+                  Y: =60
+            - wbEdWt:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="出社時間／共有項目"
+                  Default: |-
+                    ={Value: Coalesce(varSbEdit.wt, "（なし）")}
+                  Height: =44
+                  ItemDisplayText: =ThisItem.Value
+                  Items: |-
+                    =Table(
+                        {Value: "（なし）"},
+                        ForAll(Sort(Filter(予定選択肢, Title = wbBranchKey.Text && 種類 = "勤務区分"), Value(表示順)) As o, {Value: o.値})
+                    )
+                  Width: =480
+                  X: =20
+                  Y: =92
+            - wbEdL2:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =30
+                  Size: =15
+                  Text: ="共有内容（80文字まで）"
+                  Width: =480
+                  X: =20
+                  Y: =144
+            - wbEdShare:
+                Control: ModernTextInput@1.1.2
+                Properties:
+                  AccessibleLabel: ="共有内容"
+                  Default: =varSbEdit.share
+                  Height: =80
+                  Type: =TextInputType.Multiline
+                  Width: =480
+                  X: =20
+                  Y: =176
+            - wbEdL3:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =30
+                  Size: =15
+                  Text: ="帰社時間"
+                  Width: =480
+                  X: =20
+                  Y: =264
+            - wbEdRet:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="帰社時間"
+                  Default: |-
+                    ={Value: Coalesce(varSbEdit.ret, "（なし）")}
+                  Height: =44
+                  ItemDisplayText: =ThisItem.Value
+                  Items: |-
+                    =Table(
+                        {Value: "（なし）"},
+                        ForAll(Sort(Filter(予定選択肢, Title = wbBranchKey.Text && 種類 = "帰社時間"), Value(表示順)) As o, {Value: o.値})
+                    )
+                  Width: =480
+                  X: =20
+                  Y: =296
+            - wbEdSave:
+                Control: ModernButton@1.0.0
+                Properties:
+                  DisplayMode: =If(varSbSaving, DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =48
+                  OnSelect: |-
+                    =If(
+                        Len(wbEdShare.Text) > 80,
+                        Set(varSbToast, {msg: "共有内容は80文字以内で入力してください", ok: false}),
+                        Set(varSbSaving, true);
+                        With(
+                            {
+                                wt: If(wbEdWt.Selected.Value = "（なし）", "", wbEdWt.Selected.Value),
+                                rt: If(wbEdRet.Selected.Value = "（なし）", "", wbEdRet.Selected.Value),
+                                r: LookUp(予定, Title = varSbEdit.name && 日付 = wbDateKey.Text)
+                            },
+                            IfError(
+                                If(
+                                    IsBlank(r),
+                                    Patch(予定, Defaults(予定), {Title: varSbEdit.name, 日付: wbDateKey.Text, 勤務区分: wt, 共有内容: wbEdShare.Text, 帰社時間: rt}),
+                                    Patch(予定, r, {勤務区分: wt, 共有内容: wbEdShare.Text, 帰社時間: rt})
+                                );
+                                Refresh(予定);
+                                Set(varSbShow, false),
+                                Set(varSbToast, {msg: "保存できませんでした: " & FirstError.Message, ok: false})
+                            )
+                        );
+                        Set(varSbSaving, false)
+                    )
+                  Size: =17
+                  Text: ="保存"
+                  Width: =232
+                  X: =20
+                  Y: =370
+            - wbEdClose:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =48
+                  OnSelect: =Set(varSbShow, false)
+                  Size: =17
+                  Text: ="閉じる"
+                  Width: =232
+                  X: =268
+                  Y: =370
+      - wbSavingOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.55)
+            Height: =Parent.Height
+            Visible: =varSbSaving
+            Width: =Parent.Width
+      - wbSavingText:
+          Control: ModernText@1.0.0
+          Properties:
+            Align: =Align.Center
+            Color: =RGBA(255, 255, 255, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            Size: =24
+            Text: ="保存中..."
+            Visible: =varSbSaving
+            Width: =Parent.Width
+            Y: =(Parent.Height - Self.Height) / 2
+      - wbUsrOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.35)
+            Height: =Parent.Height
+            OnSelect: =Set(varSbUserShow, false)
+            Visible: =varSbUserShow
+            Width: =Parent.Width
+      - wbUsrPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =330
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =varSbUserShow
+            Width: =480
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - wbUsrAvatarBg:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Fill: =RGBA(59, 89, 152, 1)
+                  Height: =88
+                  RadiusBottomLeft: =44
+                  RadiusBottomRight: =44
+                  RadiusTopLeft: =44
+                  RadiusTopRight: =44
+                  Width: =88
+                  X: =24
+                  Y: =24
+            - wbUsrInitial:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =88
+                  Size: =34
+                  Text: =Left(varSbUserName, 1)
+                  Width: =88
+                  X: =24
+                  Y: =24
+            - wbUsrPhoto:
+                Control: Image@2.2.3
+                Properties:
+                  Height: =88
+                  Image: =IfError(Office365Users.UserPhoto(wbUsrMail.Text), Blank())
+                  Visible: =!IsBlank(Self.Image)
+                  Width: =88
+                  X: =24
+                  Y: =24
+            - wbUsrName:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =40
+                  Size: =22
+                  Text: =varSbUserName
+                  Width: =330
+                  Wrap: =false
+                  X: =128
+                  Y: =26
+            - wbUsrTitle:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =32
+                  Size: =16
+                  Text: =Text(First(LookUp(社員, Title = varSbUserName && ボード = wbBranchKey.Text).メール).JobTitle)
+                  Width: =330
+                  Wrap: =false
+                  X: =128
+                  Y: =66
+            - wbUsrPhone:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: |-
+                    =With({p: IfError(Office365ユーザー.UserProfileV2(wbUsrMail.Text), Blank()), r: LookUp(社員, Title = varSbUserName && ボード = wbBranchKey.Text)}, With({biz: Text(First(p.businessPhones).Value), ext: Text(r.内線)}, Trim(If(IsBlank(biz), "", "☎ " & biz) & If(IsBlank(ext), "", "　内線 " & ext))))
+                  Width: =340
+                  Wrap: =false
+                  X: =128
+                  Y: =100
+            - wbUsrMobile:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =28
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: |-
+                    =With({p: IfError(Office365ユーザー.UserProfileV2(wbUsrMail.Text), Blank())}, With({mob: Coalesce(p.mobilePhone, Text(LookUp(社員, Title = varSbUserName && ボード = wbBranchKey.Text).電話))}, If(IsBlank(mob), "", "📱 " & mob)))
+                  Width: =340
+                  Wrap: =false
+                  X: =128
+                  Y: =130
+            - wbUsrMail:
+                Control: ModernText@1.0.0
+                Properties:
+                  Height: =10
+                  Text: =Text(First(LookUp(社員, Title = varSbUserName && ボード = wbBranchKey.Text).メール).Email)
+                  Visible: =false
+                  Width: =10
+            - wbUsrMailBtn:
+                Control: ModernButton@1.0.0
+                Properties:
+                  DisplayMode: =If(IsBlank(wbUsrMail.Text), DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =48
+                  OnSelect: =Launch("mailto:" & wbUsrMail.Text & "?subject=" & EncodeUrl("【スケジュールボードからご連絡】"))
+                  Size: =16
+                  Text: ="✉ メールを送る"
+                  Width: =206
+                  X: =24
+                  Y: =180
+            - wbUsrChatBtn:
+                Control: ModernButton@1.0.0
+                Properties:
+                  DisplayMode: =If(IsBlank(wbUsrMail.Text), DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =48
+                  OnSelect: =Launch("https://teams.microsoft.com/l/chat/0/0?users=" & EncodeUrl(wbUsrMail.Text))
+                  Size: =16
+                  Text: ="💬 チャット"
+                  Width: =206
+                  X: =250
+                  Y: =180
+            - wbUsrSched:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =48
+                  OnSelect: |-
+                    =Set(varPsName, varSbUserName);
+                    Set(varPsBranch, wbBranchKey.Text);
+                    Set(varPsMonth, Date(Year(Coalesce(varSbDate, Today())), Month(Coalesce(varSbDate, Today())), 1));
+                    Set(varPsShow, false);
+                    Set(varSbUserShow, false);
+                    Navigate(個人スケジュール)
+                  Size: =16
+                  Text: ="📅 個人スケジュール"
+                  Width: =206
+                  X: =24
+                  Y: =248
+            - wbUsrClose:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =48
+                  OnSelect: =Set(varSbUserShow, false)
+                  Size: =16
+                  Text: ="閉じる"
+                  Width: =206
+                  X: =250
+                  Y: =248
+      - wbToast:
+          Control: ModernText@1.0.0
+          Properties:
+            Align: =Align.Center
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =If(varSbToast.ok, RGBA(46, 125, 50, 1), RGBA(198, 40, 40, 1))
+            FontWeight: =FontWeight.Semibold
+            Height: =48
+            Size: =16
+            Text: =varSbToast.msg
+            Visible: =!IsBlank(varSbToast)
+            Width: =Min(600, Parent.Width - 32)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =Parent.Height - 76
+      - wbToastTimer:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =2500
+            OnTimerEnd: =Set(varSbToast, Blank())
+            Start: =!IsBlank(varSbToast)
+            Visible: =false
+      - wbInitTimer:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =300
+            OnTimerEnd: |-
+              =Set(varSbBranch, Trim(Text(LookUp(社員, User().Email in メール.Email).ボード)));
+              Reset(wbBranch)
+            Start: =!IsEmpty(社員)
+            Visible: =false
+      - wbAutoRefreshTimer:
+          Control: Timer@2.1.0
+          Properties:
+            AutoStart: =true
+            Duration: =15000
+            OnTimerEnd: |-
+              =Set(varSbNow, Now());
+              If(
+                  !varSbShow && !varSbUserShow,
+                  ClearCollect(colSbLatest, FirstN(Sort(予定, Modified, SortOrder.Descending), 1));
+                  With(
+                      {m: First(colSbLatest).Modified},
+                      If(
+                          IsBlank(varSbLastMod),
+                          Set(varSbLastMod, m),
+                          m <> varSbLastMod,
+                          Set(varSbLastMod, m);
+                          Refresh(予定)
+                      )
+                  )
+              )
+            Repeat: =true
+            Visible: =false
+      - wbRouteTimer:
+          Control: Timer@2.1.0
+          Properties:
+            AutoStart: =true
+            Duration: =100
+            OnTimerEnd: =If(App.Width < 700, Navigate(スケジュールボード_SP))
+            Visible: =false

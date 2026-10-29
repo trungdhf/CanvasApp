@@ -1,0 +1,605 @@
+﻿Screens:
+  グループスケジュール:
+    Properties:
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+    Children:
+      - gsRoot:
+          Control: GroupContainer
+          Variant: ManualLayout
+          Properties:
+            Fill: =RGBA(245, 246, 250, 1)
+            Height: =Parent.Height
+            Width: =Parent.Width
+          Children:
+            - gsBranchKey:
+                Control: ModernText
+                Properties:
+                  Height: =10
+                  Text: =Coalesce(gsBranch.Selected.Value, First(Distinct(社員, 拠点)).Value)
+                  Visible: =false
+                  Width: =10
+            - gsDeptKey:
+                Control: ModernText
+                Properties:
+                  Height: =10
+                  Text: =Coalesce(gsDept.Selected.Value, First(Sort(Distinct(Filter(社員, 拠点 = gsBranchKey.Text), 部署), Value)).Value)
+                  Visible: =false
+                  Width: =10
+            - gsHeader:
+                Control: GroupContainer
+                Variant: ManualLayout
+                Properties:
+                  Fill: =RGBA(59, 89, 152, 1)
+                  Height: =64
+                  Width: =Parent.Width
+                Children:
+                  - gsTitle:
+                      Control: ModernText
+                      Properties:
+                        Color: =RGBA(255, 255, 255, 1)
+                        FontWeight: =FontWeight.Bold
+                        Height: =44
+                        Size: =18
+                        Text: |-
+                          ="👥 グループスケジュール"
+                        Width: =250
+                        Wrap: =false
+                        X: =16
+                        Y: =10
+                  - gsBranch:
+                      Control: ModernDropdown
+                      Properties:
+                        AccessibleLabel: ="拠点"
+                        Default: |-
+                          =If(IsBlank(varGsBranch), First(Distinct(社員, 拠点)), {Value: varGsBranch})
+                        Height: =36
+                        ItemDisplayText: =ThisItem.Value
+                        Items: =Distinct(社員, 拠点)
+                        Width: =140
+                        X: =270
+                        Y: =14
+                  - gsDept:
+                      Control: ModernDropdown
+                      Properties:
+                        AccessibleLabel: ="部署"
+                        Default: |-
+                          =If(IsBlank(varGsDept), First(Sort(Distinct(Filter(社員, 拠点 = gsBranchKey.Text), 部署), Value)), {Value: varGsDept})
+                        Height: =36
+                        ItemDisplayText: =ThisItem.Value
+                        Items: =Sort(Distinct(Filter(社員, 拠点 = gsBranchKey.Text), 部署), Value)
+                        Width: =180
+                        X: =418
+                        Y: =14
+                  - gsMode2:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =If(Coalesce(varGsDays, 7) = 2, ButtonAppearance.Primary, ButtonAppearance.Secondary)
+                        Height: =36
+                        OnSelect: |-
+                          =Set(varGsDays, 2);
+                          Set(varGsStart, Today())
+                        Text: ="2日"
+                        Width: =60
+                        X: =610
+                        Y: =14
+                  - gsModeW:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =If(Coalesce(varGsDays, 7) = 7, ButtonAppearance.Primary, ButtonAppearance.Secondary)
+                        Height: =36
+                        OnSelect: |-
+                          =Set(varGsDays, 7);
+                          Set(varGsStart, DateAdd(Today(), 1 - Weekday(Today(), StartOfWeek.Monday), TimeUnit.Days))
+                        Text: ="週"
+                        Width: =60
+                        X: =674
+                        Y: =14
+                  - gsPrev:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =ButtonAppearance.Secondary
+                        Height: =36
+                        OnSelect: =Set(varGsStart, DateAdd(Coalesce(varGsStart, DateAdd(Today(), 1 - Weekday(Today(), StartOfWeek.Monday), TimeUnit.Days)), -Coalesce(varGsDays, 7), TimeUnit.Days))
+                        Text: ="◀ 前"
+                        Width: =70
+                        X: =746
+                        Y: =14
+                  - gsRange:
+                      Control: ModernText
+                      Properties:
+                        Align: =Align.Center
+                        Color: =RGBA(255, 255, 255, 1)
+                        FontWeight: =FontWeight.Bold
+                        Height: =36
+                        Size: =14
+                        Text: |-
+                          =With(
+                              {s: Coalesce(varGsStart, DateAdd(Today(), 1 - Weekday(Today(), StartOfWeek.Monday), TimeUnit.Days))},
+                              Text(s, "yyyy/m/d") & " 〜 " & Text(DateAdd(s, Coalesce(varGsDays, 7) - 1, TimeUnit.Days), "m/d")
+                          )
+                        Width: =200
+                        Wrap: =false
+                        X: =820
+                        Y: =14
+                  - gsNext:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =ButtonAppearance.Secondary
+                        Height: =36
+                        OnSelect: =Set(varGsStart, DateAdd(Coalesce(varGsStart, DateAdd(Today(), 1 - Weekday(Today(), StartOfWeek.Monday), TimeUnit.Days)), Coalesce(varGsDays, 7), TimeUnit.Days))
+                        Text: ="次 ▶"
+                        Width: =70
+                        X: =1024
+                        Y: =14
+                  - gsToday:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =ButtonAppearance.Secondary
+                        Height: =36
+                        OnSelect: =Set(varGsStart, If(Coalesce(varGsDays, 7) = 7, DateAdd(Today(), 1 - Weekday(Today(), StartOfWeek.Monday), TimeUnit.Days), Today()))
+                        Text: ="今日"
+                        Width: =64
+                        X: =1100
+                        Y: =14
+                  - gsRefresh:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =ButtonAppearance.Secondary
+                        Height: =36
+                        OnSelect: |-
+                          =Refresh(予定);
+                          Refresh(社員)
+                        Text: |-
+                          ="🔄 更新"
+                        Width: =90
+                        X: =1170
+                        Y: =14
+                  - gsBack:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =ButtonAppearance.Secondary
+                        Height: =36
+                        OnSelect: =Back()
+                        Text: ="← ボード"
+                        Width: =90
+                        X: =1266
+                        Y: =14
+            - gsMulti:
+                Control: ModernButton
+                Properties:
+                  Appearance: =If(varGsMulti, ButtonAppearance.Primary, ButtonAppearance.Secondary)
+                  OnSelect: |-
+                    =Set(varGsMulti, !varGsMulti);
+                    Clear(colGsSel)
+                  Text: =If(varGsMulti, "✕ 選択終了", "☑ 複数選択")
+                  Width: =130
+                  X: =16
+                  Y: =74
+            - gsBulk:
+                Control: ModernButton
+                Properties:
+                  DisplayMode: =If(CountRows(colGsSel) = 0, DisplayMode.Disabled, DisplayMode.Edit)
+                  OnSelect: |-
+                    =Set(varGsBulk, true);
+                    Set(varGsEdit, {kind: "c", name: "", dkey: "", dlabel: "", wd: 0, wt: "", ws: "", share: "", ret: ""});
+                    Set(varGsShow, true);
+                    Reset(gsEdWt);
+                    Reset(gsEdShare);
+                    Reset(gsEdRet)
+                  Text: ="まとめて編集（" & CountRows(colGsSel) & " マス）"
+                  Visible: =varGsMulti
+                  Width: =190
+                  X: =154
+                  Y: =74
+            - gsMultiHint:
+                Control: ModernText
+                Properties:
+                  Color: =RGBA(90, 90, 90, 1)
+                  Size: =12
+                  Text: ="編集したいマスを順にタップ（もう一度タップで解除）→「まとめて編集」"
+                  Visible: =varGsMulti
+                  Width: =600
+                  Wrap: =false
+                  X: =354
+                  Y: =74
+            - gsGrid:
+                Control: Gallery
+                Variant: Vertical
+                Properties:
+                  Height: =Parent.Height - 120
+                  Items: |-
+                    =With(
+                        {
+                            s: Coalesce(varGsStart, DateAdd(Today(), 1 - Weekday(Today(), StartOfWeek.Monday), TimeUnit.Days)),
+                            n: Coalesce(varGsDays, 7)
+                        },
+                        With(
+                            {
+                                emp: Sort(Filter(社員, 拠点 = gsBranchKey.Text && 部署 = gsDeptKey.Text), Value(表示順)),
+                                k1: Text(s, "yyyy-mm-dd"),
+                                k2: Text(DateAdd(s, Min(1, n - 1), TimeUnit.Days), "yyyy-mm-dd"),
+                                k3: Text(DateAdd(s, Min(2, n - 1), TimeUnit.Days), "yyyy-mm-dd"),
+                                k4: Text(DateAdd(s, Min(3, n - 1), TimeUnit.Days), "yyyy-mm-dd"),
+                                k5: Text(DateAdd(s, Min(4, n - 1), TimeUnit.Days), "yyyy-mm-dd"),
+                                k6: Text(DateAdd(s, Min(5, n - 1), TimeUnit.Days), "yyyy-mm-dd"),
+                                k7: Text(DateAdd(s, Min(6, n - 1), TimeUnit.Days), "yyyy-mm-dd")
+                            },
+                            With(
+                                {sc: Filter(予定, 日付 = k1 || 日付 = k2 || 日付 = k3 || 日付 = k4 || 日付 = k5 || 日付 = k6 || 日付 = k7)},
+                                ForAll(
+                                    Sequence((CountRows(emp) + 1) * (n + 1)) As q,
+                                    With(
+                                        {
+                                            pi: RoundUp(q.Value / (n + 1), 0) - 1,
+                                            di: Mod(q.Value - 1, n + 1),
+                                            dd: DateAdd(s, Mod(q.Value - 1, n + 1) - 1, TimeUnit.Days)
+                                        },
+                                        If(
+                                            pi = 0,
+                                            {kind: If(di = 0, "c0", "h"), name: "", dkey: Text(dd, "yyyy-mm-dd"), dlabel: Text(dd, "m/d (ddd)", "ja-JP"), wd: Weekday(dd), wt: "", ws: "", share: "", ret: ""},
+                                            With(
+                                                {pp: Index(emp, pi)},
+                                                If(
+                                                    di = 0,
+                                                    {kind: "n", name: Text(pp.Title), dkey: "", dlabel: "", wd: 0, wt: "", ws: "", share: "", ret: ""},
+                                                    With(
+                                                        {r: LookUp(sc, Title = pp.Title && 日付 = Text(dd, "yyyy-mm-dd"))},
+                                                        {kind: "c", name: Text(pp.Title), dkey: Text(dd, "yyyy-mm-dd"), dlabel: Text(dd, "m/d (ddd)", "ja-JP"), wd: Weekday(dd), wt: Text(r.出社時間), ws: Text(r.勤務区分), share: Text(r.共有内容), ret: Text(r.帰社時間)}
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                  TemplatePadding: =0
+                  TemplateSize: =74
+                  Width: =Parent.Width - 32
+                  WrapCount: =Coalesce(varGsDays, 7) + 1
+                  X: =16
+                  Y: =114
+                Children:
+                  - gsCellBg:
+                      Control: Rectangle
+                      Properties:
+                        BorderColor: =RGBA(220, 224, 232, 1)
+                        BorderThickness: =1
+                        Fill: |-
+                          =Switch(
+                              ThisItem.kind,
+                              "c0", RGBA(59, 89, 152, 1),
+                              "h", If(ThisItem.dkey = Text(Today(), "yyyy-mm-dd"), RGBA(230, 126, 34, 1), RGBA(59, 89, 152, 1)),
+                              "n", RGBA(232, 244, 217, 1),
+                              If(
+                                  Find("休暇", ThisItem.ws) > 0 || Find("出張", ThisItem.ws) > 0 || Find("外出", ThisItem.ws) > 0, RGBA(236, 236, 236, 1),
+                                  ThisItem.dkey = Text(Today(), "yyyy-mm-dd"), RGBA(255, 249, 219, 1),
+                                  ThisItem.wd = 1, RGBA(253, 236, 236, 1),
+                                  ThisItem.wd = 7, RGBA(234, 242, 253, 1),
+                                  RGBA(255, 255, 255, 1)
+                              )
+                          )
+                        Height: =Parent.TemplateHeight
+                        Width: =Parent.TemplateWidth
+                  - gsHdrText:
+                      Control: ModernText
+                      Properties:
+                        Align: =Align.Center
+                        Color: =If(ThisItem.wd = 1 && ThisItem.kind = "h", RGBA(255, 205, 205, 1), ThisItem.wd = 7 && ThisItem.kind = "h", RGBA(200, 225, 255, 1), RGBA(255, 255, 255, 1))
+                        FontWeight: =FontWeight.Bold
+                        Height: =44
+                        Size: =14
+                        Text: =If(ThisItem.kind = "c0", "名前", ThisItem.dlabel)
+                        Visible: =ThisItem.kind = "h" || ThisItem.kind = "c0"
+                        Width: =Parent.TemplateWidth - 8
+                        Wrap: =false
+                        X: =4
+                        Y: =(Parent.TemplateHeight - 44) / 2
+                  - gsName:
+                      Control: ModernText
+                      Properties:
+                        Color: =RGBA(0, 18, 107, 1)
+                        FontWeight: =FontWeight.Semibold
+                        Height: =40
+                        Size: =13
+                        Text: =ThisItem.name
+                        Visible: =ThisItem.kind = "n"
+                        Width: =Parent.TemplateWidth - 12
+                        Wrap: =false
+                        X: =8
+                        Y: =(Parent.TemplateHeight - 44) / 2
+                  - gsBadge:
+                      Control: Label
+                      Properties:
+                        Align: =Align.Center
+                        Color: =ColorValue(Coalesce(LookUp(予定選択肢, Title = gsBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.ws).文字色, "#1F2A44"))
+                        Fill: =ColorValue(Coalesce(LookUp(予定選択肢, Title = gsBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.ws).背景色, "#E8EAF6"))
+                        Font: =Font.'Segoe UI'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =22
+                        PaddingBottom: =1
+                        PaddingLeft: =4
+                        PaddingRight: =4
+                        PaddingTop: =1
+                        Size: =10
+                        Text: =ThisItem.ws
+                        Visible: =ThisItem.kind = "c" && !IsBlank(ThisItem.ws)
+                        Width: =Min(76, Parent.TemplateWidth - 12)
+                        Wrap: =false
+                        X: =4
+                        Y: =4
+                  - gsWorkTime:
+                      Control: Label
+                      Properties:
+                        Align: =Align.Left
+                        Color: =RGBA(25, 118, 210, 1)
+                        Font: =Font.'Segoe UI'
+                        FontWeight: =FontWeight.Semibold
+                        Height: =22
+                        PaddingBottom: =1
+                        PaddingLeft: =4
+                        PaddingRight: =4
+                        PaddingTop: =1
+                        Size: =10
+                        Text: =ThisItem.wt
+                        Visible: =ThisItem.kind = "c" && !IsBlank(ThisItem.wt)
+                        Width: =Min(76, Parent.TemplateWidth - 12)
+                        Wrap: =false
+                        X: =4
+                        Y: =26
+                  - gsRet:
+                      Control: Label
+                      Properties:
+                        Align: =Align.Right
+                        Color: =RGBA(25, 118, 210, 1)
+                        Font: =Font.'Segoe UI'
+                        Height: =22
+                        PaddingBottom: =1
+                        PaddingLeft: =2
+                        PaddingRight: =4
+                        PaddingTop: =1
+                        Size: =10
+                        Text: =ThisItem.ret
+                        Visible: =ThisItem.kind = "c" && !IsBlank(ThisItem.ret)
+                        Width: =Max(0, Parent.TemplateWidth - 86)
+                        Wrap: =false
+                        X: =82
+                        Y: =4
+                  - gsShare:
+                      Control: ModernText
+                      Properties:
+                        Height: =26
+                        Size: =10
+                        Text: =ThisItem.share
+                        Visible: =ThisItem.kind = "c"
+                        Width: =Parent.TemplateWidth - 8
+                        X: =4
+                        Y: =48
+                  - gsSelMark:
+                      Control: Rectangle
+                      Properties:
+                        BorderColor: =RGBA(25, 118, 210, 1)
+                        BorderThickness: =2
+                        Fill: =RGBA(25, 118, 210, 0.22)
+                        Height: =Parent.TemplateHeight
+                        Visible: =ThisItem.kind = "c" && !IsBlank(LookUp(colGsSel, k = ThisItem.name & "|" & ThisItem.dkey))
+                        Width: =Parent.TemplateWidth
+                  - gsTap:
+                      Control: Rectangle
+                      Properties:
+                        Fill: =RGBA(0, 0, 0, 0)
+                        Height: =Parent.TemplateHeight
+                        HoverFill: =RGBA(59, 89, 152, 0.12)
+                        OnSelect: |-
+                          =If(
+                              varGsMulti,
+                              If(
+                                  IsBlank(LookUp(colGsSel, k = ThisItem.name & "|" & ThisItem.dkey)),
+                                  Collect(colGsSel, {k: ThisItem.name & "|" & ThisItem.dkey, name: ThisItem.name, dkey: ThisItem.dkey}),
+                                  RemoveIf(colGsSel, k = ThisItem.name & "|" & ThisItem.dkey)
+                              ),
+                              Set(varGsBulk, false);
+                              Set(varGsEdit, ThisItem);
+                              Set(varGsShow, true);
+                              Reset(gsEdWt);
+                              Reset(gsEdShare);
+                              Reset(gsEdRet)
+                          )
+                        PressedFill: =RGBA(59, 89, 152, 0.25)
+                        Visible: =ThisItem.kind = "c"
+                        Width: =Parent.TemplateWidth
+            - gsEmpty:
+                Control: ModernText
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(90, 90, 90, 1)
+                  Height: =40
+                  Size: =14
+                  Text: ="この部署の社員がいません（拠点・部署を選んでください）"
+                  Visible: =CountRows(Filter(社員, 拠点 = gsBranchKey.Text && 部署 = gsDeptKey.Text)) = 0
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =200
+            - gsOverlay:
+                Control: Rectangle
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0.35)
+                  Height: =Parent.Height
+                  OnSelect: =Set(varGsShow, false)
+                  Visible: =varGsShow
+                  Width: =Parent.Width
+            - gsPopup:
+                Control: GroupContainer
+                Variant: ManualLayout
+                Properties:
+                  DropShadow: =DropShadow.Bold
+                  Fill: =RGBA(255, 255, 255, 1)
+                  Height: =440
+                  RadiusBottomLeft: =12
+                  RadiusBottomRight: =12
+                  RadiusTopLeft: =12
+                  RadiusTopRight: =12
+                  Visible: =varGsShow
+                  Width: =420
+                  X: =(Parent.Width - 420) / 2
+                  Y: =(Parent.Height - 440) / 2
+                Children:
+                  - gsEdHead:
+                      Control: ModernText
+                      Properties:
+                        FontWeight: =FontWeight.Bold
+                        Height: =36
+                        Size: =17
+                        Text: =If(varGsBulk, CountRows(colGsSel) & " マスをまとめて編集", varGsEdit.name & "（" & varGsEdit.dlabel & "）予定編集")
+                        Width: =380
+                        Wrap: =false
+                        X: =20
+                        Y: =14
+                  - gsEdL1:
+                      Control: ModernText
+                      Properties:
+                        Color: =RGBA(80, 80, 80, 1)
+                        Height: =22
+                        Size: =12
+                        Text: ="勤務区分"
+                        Width: =380
+                        X: =20
+                        Y: =58
+                  - gsEdWs:
+                      Control: ModernDropdown
+                      Properties:
+                        AccessibleLabel: ="勤務区分"
+                        Default: |-
+                          ={Value: Coalesce(varGsEdit.ws, "（なし）")}
+                        Height: =36
+                        ItemDisplayText: =ThisItem.Value
+                        Items: |-
+                          =Table(
+                              {Value: "（なし）"},
+                              ForAll(Sort(Filter(予定選択肢, Title = gsBranchKey.Text && 種類 = "勤務区分"), Value(表示順)) As o, {Value: o.値})
+                          )
+                        Width: =380
+                        X: =20
+                        Y: =82
+                  - gsEdLwt:
+                      Control: ModernText
+                      Properties:
+                        Color: =RGBA(80, 80, 80, 1)
+                        Height: =22
+                        Size: =12
+                        Text: ="出社時間"
+                        Width: =380
+                        X: =20
+                        Y: =128
+                  - gsEdWt:
+                      Control: ModernDropdown
+                      Properties:
+                        AccessibleLabel: ="出社時間"
+                        Default: |-
+                          ={Value: Coalesce(varGsEdit.wt, "（なし）")}
+                        Height: =36
+                        ItemDisplayText: =ThisItem.Value
+                        Items: |-
+                          =Table(
+                              {Value: "（なし）"},
+                              ForAll(Sort(Filter(予定選択肢, Title = gsBranchKey.Text && 種類 = "出社時間"), Value(表示順)) As o, {Value: o.値})
+                          )
+                        Width: =380
+                        X: =20
+                        Y: =152
+                  - gsEdL2:
+                      Control: ModernText
+                      Properties:
+                        Color: =RGBA(80, 80, 80, 1)
+                        Height: =22
+                        Size: =12
+                        Text: ="共有内容（80文字まで）"
+                        Width: =380
+                        X: =20
+                        Y: =198
+                  - gsEdShare:
+                      Control: ModernTextInput
+                      Properties:
+                        AccessibleLabel: ="共有内容"
+                        Default: =varGsEdit.share
+                        Height: =64
+                        Type: =TextInputType.Multiline
+                        Width: =380
+                        X: =20
+                        Y: =222
+                  - gsEdL3:
+                      Control: ModernText
+                      Properties:
+                        Color: =RGBA(80, 80, 80, 1)
+                        Height: =22
+                        Size: =12
+                        Text: ="帰社時間"
+                        Width: =380
+                        X: =20
+                        Y: =296
+                  - gsEdRet:
+                      Control: ModernDropdown
+                      Properties:
+                        AccessibleLabel: ="帰社時間"
+                        Default: |-
+                          ={Value: Coalesce(varGsEdit.ret, "（なし）")}
+                        Height: =36
+                        ItemDisplayText: =ThisItem.Value
+                        Items: |-
+                          =Table(
+                              {Value: "（なし）"},
+                              ForAll(Sort(Filter(予定選択肢, Title = gsBranchKey.Text && 種類 = "帰社時間"), Value(表示順)) As o, {Value: o.値})
+                          )
+                        Width: =380
+                        X: =20
+                        Y: =320
+                  - gsEdSave:
+                      Control: ModernButton
+                      Properties:
+                        Height: =40
+                        OnSelect: |-
+                          =If(
+                              Len(gsEdShare.Text) > 80,
+                              Notify("共有内容は80文字以内で入力してください", NotificationType.Error),
+                              With(
+                                  {
+                                      ws: If(gsEdWs.Selected.Value = "（なし）", "", gsEdWs.Selected.Value),
+                                      wt: If(gsEdWt.Selected.Value = "（なし）", "", gsEdWt.Selected.Value),
+                                      rt: If(gsEdRet.Selected.Value = "（なし）", "", gsEdRet.Selected.Value),
+                                      tg: If(varGsBulk, colGsSel, Table({k: "", name: varGsEdit.name, dkey: varGsEdit.dkey}))
+                                  },
+                                  IfError(
+                                      ForAll(
+                                          tg As c,
+                                          With(
+                                              {r: LookUp(予定, Title = c.name && 日付 = c.dkey)},
+                                              If(
+                                                  IsBlank(r),
+                                                  Patch(予定, Defaults(予定), {Title: c.name, 日付: c.dkey, 勤務区分: ws, 出社時間: wt, 共有内容: gsEdShare.Text, 帰社時間: rt}),
+                                                  Patch(予定, r, {勤務区分: ws, 出社時間: wt, 共有内容: gsEdShare.Text, 帰社時間: rt})
+                                              )
+                                          )
+                                      );
+                                      Refresh(予定);
+                                      Set(varGsShow, false);
+                                      If(varGsBulk, Clear(colGsSel); Set(varGsMulti, false));
+                                      Notify("保存しました", NotificationType.Success),
+                                      Notify("保存できませんでした: " & FirstError.Message, NotificationType.Error)
+                                  )
+                              )
+                          )
+                        Text: ="保存"
+                        Width: =184
+                        X: =20
+                        Y: =376
+                  - gsEdClose:
+                      Control: ModernButton
+                      Properties:
+                        Appearance: =ButtonAppearance.Secondary
+                        Height: =40
+                        OnSelect: =Set(varGsShow, false)
+                        Text: ="閉じる"
+                        Width: =184
+                        X: =216
+                        Y: =376

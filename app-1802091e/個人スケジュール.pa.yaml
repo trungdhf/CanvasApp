@@ -1,0 +1,1005 @@
+- psRoot:
+    Control: GroupContainer@1.5.0
+    Variant: ManualLayout
+    Properties:
+      Fill: =RGBA(245, 246, 250, 1)
+      Height: =Parent.Height
+      Width: =Parent.Width
+    Children:
+      - psBranchKey:
+          Control: ModernText@1.0.0
+          Properties:
+            Height: =10
+            Text: =Coalesce(varPsBranch, First(Distinct(社員, ボード)).Value)
+            Visible: =false
+            Width: =10
+      - psWeeks:
+          Control: ModernText@1.0.0
+          Properties:
+            Height: =10
+            Text: |-
+              =With(
+                  {m: Coalesce(varPsMonth, Date(Year(Today()), Month(Today()), 1))},
+                    RoundUp((Weekday(m, StartOfWeek.Sunday) - 1 + Day(DateAdd(DateAdd(m, 1, TimeUnit.Months), -1, TimeUnit.Days))) / 7, 0)
+              )
+            Visible: =false
+            Width: =10
+      - psHeader:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            Fill: =RGBA(59, 89, 152, 1)
+            Height: =If(App.Width < 700, 108, 64)
+            Width: =Parent.Width
+          Children:
+            - psBack:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =36
+                  OnSelect: =Back()
+                  Text: ="← 戻る"
+                  Width: =84
+                  X: =If(App.Width < 700, 8, 16)
+                  Y: =If(App.Width < 700, 8, 14)
+            - psTitle:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =40
+                  Size: =If(App.Width < 700, 16, 18)
+                  Text: =varPsName
+                  Width: =If(App.Width < 700, Max(60, Parent.Width - 104), 270)
+                  Wrap: =false
+                  X: =If(App.Width < 700, 96, 110)
+                  Y: =If(App.Width < 700, 6, 12)
+            - psPrev:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =36
+                  Icon: ="ArrowLeft"
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Set(varPsMonth, DateAdd(Coalesce(varPsMonth, Date(Year(Today()), Month(Today()), 1)), -1, TimeUnit.Months))
+                  Size: =20
+                  Text: ="◀ "
+                  Width: =If(App.Width < 700, 48, 90)
+                  X: =If(App.Width < 700, 8, 390)
+                  Y: =If(App.Width < 700, 60, 14)
+            - psMonthLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =36
+                  Size: =17
+                  Text: =Text(Coalesce(varPsMonth, Date(Year(Today()), Month(Today()), 1)), "yyyy年m月")
+                  Width: =If(App.Width < 700, Max(60, Parent.Width - 212), 150)
+                  Wrap: =false
+                  X: =If(App.Width < 700, 60, 486)
+                  Y: =If(App.Width < 700, 60, 14)
+            - psNext:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =36
+                  Icon: ="ArrowRight"
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Set(varPsMonth, DateAdd(Coalesce(varPsMonth, Date(Year(Today()), Month(Today()), 1)), 1, TimeUnit.Months))
+                  Size: =20
+                  Text: ="▶"
+                  Width: =If(App.Width < 700, 48, 90)
+                  X: =If(App.Width < 700, Parent.Width - 148, 642)
+                  Y: =If(App.Width < 700, 60, 14)
+            - psThis:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =36
+                  OnSelect: =Set(varPsMonth, Date(Year(Today()), Month(Today()), 1))
+                  Text: ="今月"
+                  Width: =If(App.Width < 700, 52, 70)
+                  X: =If(App.Width < 700, Parent.Width - 96, 740)
+                  Y: =If(App.Width < 700, 60, 14)
+            - psRefresh:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =36
+                  Icon: ="ArrowClockwise"
+                  Layout: =ButtonLayout.IconOnly
+                  OnSelect: =Refresh(予定)
+                  Size: =20
+                  Text: |-
+                    =If(App.Width < 700, "🔄", "🔄 更新")
+                  Width: =If(App.Width < 700, 36, 90)
+                  X: =If(App.Width < 700, Parent.Width - 40, 818)
+                  Y: =If(App.Width < 700, 60, 14)
+      - psMulti:
+          Control: ModernButton@1.0.0
+          Properties:
+            Appearance: =If(varPsMulti, ButtonAppearance.Primary, ButtonAppearance.Secondary)
+            Height: =28
+            OnSelect: |-
+              =Clear(colPsSel);
+              Set(varPsMulti, !varPsMulti)
+            Text: =If(varPsMulti, "選択を終了", "複数日選択")
+            Width: =116
+            X: =8
+            Y: =69
+      - psBulk:
+          Control: ModernButton@1.0.0
+          Properties:
+            DisplayMode: =If(CountRows(colPsSel) = 0, DisplayMode.Disabled, DisplayMode.Edit)
+            Height: =28
+            OnSelect: |-
+              =Set(varPsBulk, true);
+              Set(varPsEdit, {d: Blank(), dkey: "", wt: "（なし）", share: "", ret: "（なし）"});
+              Set(varPsShow, true);
+              Reset(psEdWt);
+              Reset(psEdShare);
+              Reset(psEdRet)
+            Text: ="選択日へ一括適用（" & CountRows(colPsSel) & "）"
+            Visible: =varPsMulti
+            Width: =200
+            X: =132
+            Y: =69
+      - psRepeat:
+          Control: ModernButton@1.0.0
+          Properties:
+            Appearance: =ButtonAppearance.Secondary
+            Height: =28
+            OnSelect: |-
+              =Clear(colPsRepeatDays);
+              Set(varPsRepeatShow, true);
+              Set(varPsRepeatSaving, false);
+              Set(varPsRepeatError, Blank());
+              Reset(psRepeatStart);
+              Reset(psRepeatEnd);
+              Reset(psRepeatSkipHoliday);
+              Reset(psRepeatSkipExisting)
+            Text: ="期間・曜日で設定"
+            Width: =153
+            X: =If(App.Width < 700, 8, 340)
+            Y: =If(App.Width < 700, 108, 69)
+      - psCal:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =Parent.Height - Self.Y - 8
+            Items: |-
+              =With(
+                  {m: Coalesce(varPsMonth, Date(Year(Today()), Month(Today()), 1)), specials: calendar},
+                  With(
+                      {
+                        off: Weekday(m, StartOfWeek.Sunday) - 1,
+                          dim: Day(DateAdd(DateAdd(m, 1, TimeUnit.Months), -1, TimeUnit.Days))
+                      },
+                      With(
+                          {sc: If(varPsRepeatRun, colPsRepeatExisting, Filter(予定, Title = varPsName))},
+                          ForAll(
+                              Sequence(RoundUp((off + dim) / 7, 0) * 7) As q,
+                              With(
+                                  {dd: DateAdd(m, q.Value - 1 - off, TimeUnit.Days)},
+                                  With(
+                                      {k: Text(dd, "yyyy-mm-dd"), inm: Month(dd) = Month(m)},
+                                      With(
+                                            {
+                                              r: LookUp(sc, 日付 = k),
+                                              h: LookUp(specials, date = k && category = "holiday"),
+                                              ch: LookUp(specials, date = k && category = "company_holiday"),
+                                              cl: LookUp(specials, date = k && category = "company_leave"),
+                                              sw: LookUp(specials, date = k && category = "saturday_work")
+                                            },
+                                            {
+                                              d: dd,
+                                              dkey: k,
+                                              inm: inm,
+                                              wd: Weekday(dd),
+                                              wt: Text(r.勤務区分),
+                                              share: Text(r.共有内容),
+                                              ret: Text(r.帰社時間),
+                                              isHoliday: !IsBlank(h),
+                                              isCompanyHoliday: !IsBlank(ch),
+                                              isCompanyLeave: !IsBlank(cl),
+                                              isSaturdayWork: !IsBlank(sw)
+                                            }
+                                      )
+                                  )
+                              )
+                          )
+                      )
+                  )
+              )
+            TemplatePadding: =0
+            TemplateSize: =Max(If(App.Width < 700, 56, 72), (Parent.Height - Self.Y - 8) / Max(1, Value(psWeeks.Text)))
+            Width: =Parent.Width - 16
+            WrapCount: =7
+            X: =8
+            Y: =If(App.Width < 700, 172, 130)
+          Children:
+            - psCellBg:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =If(ThisItem.inm && ThisItem.isCompanyLeave, RGBA(255, 179, 0, 1), RGBA(220, 224, 232, 1))
+                  BorderThickness: =If(ThisItem.inm && ThisItem.isCompanyLeave, 2, 1)
+                  Fill: |-
+                    =If(
+                        !ThisItem.inm, RGBA(247, 247, 247, 1),
+                        ThisItem.dkey = Text(Today(), "yyyy-mm-dd"), RGBA(255, 249, 219, 1),
+                    ThisItem.isHoliday, RGBA(255, 179, 179, 1),
+                    ThisItem.isCompanyLeave, RGBA(255, 224, 130, 1),
+                        Find("休暇", ThisItem.wt) > 0 || Find("出張", ThisItem.wt) > 0 || Find("外出", ThisItem.wt) > 0, RGBA(236, 236, 236, 1),
+                        ThisItem.wd = 1, RGBA(224, 224, 224, 1),
+                        ThisItem.wd = 7, RGBA(234, 242, 253, 1),
+                        RGBA(255, 255, 255, 1)
+                    )
+                  Height: =Parent.TemplateHeight
+                  Width: =Parent.TemplateWidth
+            - psSelMark:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(25, 118, 210, 1)
+                  BorderThickness: =2
+                  Fill: =RGBA(25, 118, 210, 0.12)
+                  Height: =Parent.TemplateHeight
+                  Visible: =varPsMulti && ThisItem.inm && !IsBlank(LookUp(colPsSel, dkey = ThisItem.dkey))
+                  Width: =Parent.TemplateWidth
+            - psHolidayCircle:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  BorderColor: =RGBA(220, 38, 38, 1)
+                  BorderThickness: =1
+                  Height: =24
+                  RadiusBottomLeft: =12
+                  RadiusBottomRight: =12
+                  RadiusTopLeft: =12
+                  RadiusTopRight: =12
+                  Visible: =ThisItem.inm && ThisItem.isHoliday && !ThisItem.isSaturdayWork
+                  Width: =24
+                  X: =5
+                  Y: =2
+            - psDay:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: |-
+                    =If(
+                        !ThisItem.inm, RGBA(180, 180, 180, 1),
+                        ThisItem.isHoliday, RGBA(179, 58, 58, 1),
+                        ThisItem.isCompanyLeave, RGBA(121, 85, 72, 1),
+                        ThisItem.wd = 1, RGBA(211, 47, 47, 1),
+                        ThisItem.wd = 7, RGBA(25, 118, 210, 1),
+                        RGBA(31, 42, 68, 1)
+                    )
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =If(ThisItem.dkey = Text(Today(), "yyyy-mm-dd"), FontWeight.Bold, FontWeight.Semibold)
+                  Height: =20
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =11
+                  Text: =Day(ThisItem.d)
+                  Width: =30
+                  Wrap: =false
+                  X: =2
+                  Y: =3
+            - psSpecialLabel:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =If(ThisItem.isHoliday && !ThisItem.isSaturdayWork, RGBA(179, 58, 58, 1), ThisItem.isSaturdayWork, RGBA(25, 118, 210, 1), RGBA(121, 85, 72, 1))
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =16
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =2
+                  PaddingTop: =0
+                  Size: =If(App.Width < 700, 7, 9)
+                  Text: =If(ThisItem.isHoliday && !ThisItem.isSaturdayWork, "祝日", ThisItem.isSaturdayWork, If(App.Width < 700, "土曜出勤", "土曜日出勤"), ThisItem.isCompanyLeave, "一斉有休", "")
+                  Visible: =ThisItem.inm && (ThisItem.isHoliday || ThisItem.isSaturdayWork || ThisItem.isCompanyLeave)
+                  Width: =Parent.TemplateWidth
+                  Wrap: =false
+                  Y: =2
+            - psRet:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(25, 118, 210, 1)
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =20
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =10
+                  Text: =ThisItem.ret
+                  Visible: =ThisItem.inm && !IsBlank(ThisItem.ret) && Parent.TemplateWidth >= 90
+                  Width: =Max(0, Parent.TemplateWidth - 10)
+                  Wrap: =false
+                  X: =5
+                  Y: =24
+            - psBadgeBg:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Fill: =ColorValue(Coalesce(LookUp(予定選択肢, Title = psBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).背景色, "#E8EAF6"))
+                  Height: =20
+                  RadiusBottomLeft: =6
+                  RadiusBottomRight: =6
+                  RadiusTopLeft: =6
+                  RadiusTopRight: =6
+                  Visible: =ThisItem.inm && !IsBlank(ThisItem.wt)
+                  Width: =Min(76, Parent.TemplateWidth - 38)
+                  X: =32
+                  Y: =2
+            - psBadge:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =ColorValue(Coalesce(LookUp(予定選択肢, Title = psBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).文字色, "#1F2A44"))
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =20
+                  PaddingBottom: =0
+                  PaddingLeft: =3
+                  PaddingRight: =3
+                  PaddingTop: =0
+                  Size: =10
+                  Text: =ThisItem.wt
+                  Visible: =ThisItem.inm && !IsBlank(ThisItem.wt)
+                  Width: =Min(76, Parent.TemplateWidth - 38)
+                  Wrap: =false
+                  X: =32
+                  Y: =2
+            - psShare:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(50, 50, 50, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =Max(0, Parent.TemplateHeight - 46 - If(ThisItem.isCompanyHoliday, 14, 0))
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =2
+                  PaddingTop: =0
+                  Size: =10
+                  Text: =ThisItem.share
+                  VerticalAlign: =VerticalAlign.Top
+                  Visible: =ThisItem.inm && Parent.TemplateWidth >= 80
+                  Width: =Max(0, Parent.TemplateWidth - 8)
+                  X: =5
+                  Y: =45
+            - psCompanyHolidayLabel:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(121, 85, 72, 1)
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =12
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =2
+                  PaddingTop: =0
+                  Size: =7
+                  Text: ="夏季・冬季休暇"
+                  Visible: =ThisItem.inm && ThisItem.isCompanyHoliday
+                  Width: =Parent.TemplateWidth
+                  Wrap: =false
+                  Y: =Parent.TemplateHeight - 13
+            - psTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(59, 89, 152, 0.12)
+                  OnSelect: |-
+                    =If(
+                        varPsMulti,
+                        If(
+                            IsBlank(LookUp(colPsSel, dkey = ThisItem.dkey)),
+                            Collect(colPsSel, {dkey: ThisItem.dkey}),
+                            RemoveIf(colPsSel, dkey = ThisItem.dkey)
+                        ),
+                        Set(varPsBulk, false);
+                        Set(varPsEdit, ThisItem);
+                        Set(varPsShow, true);
+                        Reset(psEdWt);
+                        Reset(psEdShare);
+                        Reset(psEdRet)
+                    )
+                  PressedFill: =RGBA(59, 89, 152, 0.25)
+                  Visible: =ThisItem.inm
+                  Width: =Parent.TemplateWidth
+      - psWk:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =28
+            Items: |-
+              =ForAll(
+                  Sequence(7) As i,
+                        {i: i.Value, t: Index(["日", "月", "火", "水", "木", "金", "土"], i.Value).Value}
+              )
+            ShowScrollbar: =false
+            TemplatePadding: =0
+            TemplateSize: =28
+            Width: =Parent.Width - 16
+            WrapCount: =7
+            X: =8
+            Y: =If(App.Width < 700, 144, 102)
+          Children:
+            - psWkText:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =Switch(ThisItem.i, 1, RGBA(211, 47, 47, 1), 7, RGBA(25, 118, 210, 1), RGBA(31, 42, 68, 1))
+                  Fill: =RGBA(232, 244, 217, 1)
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =Parent.TemplateHeight
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =11
+                  Text: =ThisItem.t
+                  Width: =Parent.TemplateWidth
+      - psOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.35)
+            Height: =Parent.Height
+            OnSelect: =Set(varPsShow, false)
+            Visible: =varPsShow
+            Width: =Parent.Width
+      - psRepeatOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =If(varPsRepeatSaving, RGBA(0, 0, 0, 0.55), RGBA(0, 0, 0, 0.35))
+            Height: =Parent.Height
+            OnSelect: =If(!varPsRepeatSaving, Set(varPsRepeatShow, false))
+            Visible: =varPsRepeatShow
+            Width: =Parent.Width
+      - psPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =368
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =varPsShow
+            Width: =Min(420, Parent.Width - 16)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =Max(0, (Parent.Height - 368) / 2)
+          Children:
+            - psEdHead:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =34
+                  Size: =16
+                  Text: =If(varPsBulk, CountRows(colPsSel) & " 日分の予定を一括編集", varPsName & "　" & Text(varPsEdit.d, "m/d (ddd)") & " の予定")
+                  Width: =Parent.Width - 32
+                  Wrap: =false
+                  X: =16
+                  Y: =12
+            - psEdL1:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =22
+                  PaddingBottom: =0
+                  Size: =12
+                  Text: ="勤務区分"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =50
+            - psEdWt:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="勤務区分"
+                  Default: |-
+                    ={Value: Coalesce(varPsEdit.wt, "（なし）")}
+                  Height: =40
+                  ItemDisplayText: =ThisItem.Value
+                  Items: |-
+                    =Table(
+                        {Value: "（なし）"},
+                        ForAll(Sort(Filter(予定選択肢, Title = psBranchKey.Text && 種類 = "勤務区分"), Value(表示順)) As o, {Value: o.値})
+                    )
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =72
+            - psEdL2:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =22
+                  PaddingBottom: =0
+                  Size: =12
+                  Text: ="共有内容（80文字まで）"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =120
+            - psEdShare:
+                Control: ModernTextInput@1.1.2
+                Properties:
+                  AccessibleLabel: ="共有内容"
+                  Default: =varPsEdit.share
+                  Height: =72
+                  Type: =TextInputType.Multiline
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =142
+            - psEdL3:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =22
+                  PaddingBottom: =0
+                  Size: =12
+                  Text: ="帰社時間"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =222
+            - psEdRet:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="帰社時間"
+                  Default: |-
+                    ={Value: Coalesce(varPsEdit.ret, "（なし）")}
+                  Height: =40
+                  ItemDisplayText: =ThisItem.Value
+                  Items: |-
+                    =Table(
+                        {Value: "（なし）"},
+                        ForAll(Sort(Filter(予定選択肢, Title = psBranchKey.Text && 種類 = "帰社時間"), Value(表示順)) As o, {Value: o.値})
+                    )
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =244
+            - psEdSave:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Height: =44
+                  OnSelect: |-
+                    =If(
+                        Len(psEdShare.Text) > 80,
+                        Notify("共有内容は80文字以内で入力してください", NotificationType.Error),
+                        With(
+                            {
+                                wt: If(psEdWt.Selected.Value = "（なし）", "", psEdWt.Selected.Value),
+                                rt: If(psEdRet.Selected.Value = "（なし）", "", psEdRet.Selected.Value),
+                              targets: If(varPsBulk, colPsSel, Table({dkey: varPsEdit.dkey}))
+                            },
+                            IfError(
+                              ForAll(
+                                targets As target,
+                                With(
+                                  {r: LookUp(予定, Title = varPsName && 日付 = target.dkey)},
+                                  If(
+                                    IsBlank(r),
+                                    Patch(予定, Defaults(予定), {Title: varPsName, 日付: target.dkey, 勤務区分: wt, 共有内容: psEdShare.Text, 帰社時間: rt}),
+                                    Patch(予定, r, {勤務区分: wt, 共有内容: psEdShare.Text, 帰社時間: rt})
+                                  )
+                                )
+                                );
+                                Refresh(予定);
+                                Set(varPsShow, false);
+                              If(varPsBulk, Clear(colPsSel); Set(varPsMulti, false));
+                                Notify("保存しました", NotificationType.Success),
+                                Notify("保存できませんでした: " & FirstError.Message, NotificationType.Error)
+                            )
+                        )
+                    )
+                  Text: ="保存"
+                  Width: =(Parent.Width - 44) / 2
+                  X: =16
+                  Y: =304
+            - psEdClose:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =44
+                  OnSelect: =Set(varPsShow, false)
+                  Text: ="閉じる"
+                  Width: =(Parent.Width - 44) / 2
+                  X: =28 + (Parent.Width - 44) / 2
+                  Y: =304
+      - psRepeatPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =520
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =varPsRepeatShow && !varPsRepeatSaving
+            Width: =358
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =Max(8, (Parent.Height - Self.Height) / 2)
+          Children:
+            - psRepeatHead:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =34
+                  Size: =16
+                  Text: ="期間内の曜日に勤務区分を設定"
+                  Width: =Parent.Width - 32
+                  Wrap: =false
+                  X: =16
+                  Y: =12
+            - psRepeatStartLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =22
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: ="開始日"
+                  Width: =(Parent.Width - 48) / 2
+                  X: =16
+                  Y: =52
+            - psRepeatEndLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =22
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: ="終了日"
+                  Width: =(Parent.Width - 48) / 2
+                  X: =177
+                  Y: =52
+            - psRepeatStart:
+                Control: DatePicker@0.0.46
+                Properties:
+                  AccessibleLabel: ="開始日"
+                  SelectedDate: =Today()
+                  Width: =155
+                  X: =16
+                  Y: =74
+            - psRepeatEnd:
+                Control: DatePicker@0.0.46
+                Properties:
+                  AccessibleLabel: ="終了日"
+                  SelectedDate: =DateAdd(Today(), 30, TimeUnit.Days)
+                  Width: =155
+                  X: =177
+                  Y: =74
+            - psRepeatWeekLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =33
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: ="曜日"
+                  Width: =91
+                  X: =16
+                  Y: =100
+            - psRepeatWtLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =35
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =14
+                  Text: ="勤務区分"
+                  Width: =215
+                  X: =107
+                  Y: =97
+            - psRepeatRows:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  Height: =234
+                  Items: |-
+                    =ForAll(
+                        Sequence(6) As i,
+                      {wd: i.Value + 1, label: Index([ "月", "火", "水", "木", "金", "土"], i.Value).Value}
+                    )
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =38
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =133
+                Children:
+                  - psRepeatRowDay:
+                      Control: ModernText@1.0.0
+                      Properties:
+                        Text: =ThisItem.label
+                        Width: =72
+                        X: =4
+                        Y: =3
+                  - psRepeatRowWt:
+                      Control: ModernDropdown@1.0.3
+                      Properties:
+                        AccessibleLabel: =ThisItem.label & "の勤務区分"
+                        Default: |-
+                          =With(
+                              {selected: LookUp(colPsRepeatDays, wd = ThisItem.wd)},
+                              If(
+                                  IsBlank(selected.wd),
+                                  {Value: "設定なし"},
+                                  {Value: selected.wt}
+                              )
+                          )
+                        ItemDisplayText: =ThisItem.Value
+                        Items: |-
+                          =Table(
+                              {Value: "設定なし"},
+                              {Value: ""},
+                              ForAll(Sort(Filter(予定選択肢, Title = psBranchKey.Text && 種類 = "勤務区分"), Value(表示順)) As o, {Value: o.値})
+                          )
+                        OnChange: |-
+                          =RemoveIf(colPsRepeatDays, wd = ThisItem.wd);
+                          If(
+                              Self.Selected.Value <> "設定なし",
+                              Collect(colPsRepeatDays, {wd: ThisItem.wd, wt: Self.Selected.Value})
+                          )
+                        Width: =230
+                        X: =88
+                        Y: =3
+            - psRepeatSkipHoliday:
+                Control: CheckBox@0.0.30
+                Properties:
+                  Checked: =true
+                  Height: =24
+                  Label: ="祝日・会社休日・一斉有休は適用しない"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =385
+            - psRepeatSkipExisting:
+                Control: CheckBox@0.0.30
+                Properties:
+                  Height: =24
+                  Label: ="既に予定がある日には適用しない"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =411
+            - psRepeatError:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(198, 40, 40, 1)
+                  Height: =20
+                  Size: =11
+                  Text: =varPsRepeatError
+                  Visible: =!IsBlank(varPsRepeatError) && !varPsRepeatSaving
+                  Width: =Parent.Width - 32
+                  Wrap: =false
+                  X: =16
+                  Y: =439
+            - psRepeatSave:
+                Control: ModernButton@1.0.0
+                Properties:
+                  DisplayMode: =If(varPsRepeatSaving, DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =40
+                  OnSelect: |-
+                    =With(
+                        {
+                            startDate: psRepeatStart.SelectedDate,
+                            endDate: psRepeatEnd.SelectedDate
+                        },
+                        If(
+                            IsBlank(startDate) || IsBlank(endDate),
+                          Set(varPsRepeatError, "開始日と終了日を選択してください"),
+                            startDate > endDate,
+                          Set(varPsRepeatError, "終了日は開始日以降の日付を入力してください"),
+                            IsEmpty(colPsRepeatDays),
+                          Set(varPsRepeatError, "曜日ごとに勤務区分を選択してください"),
+                          Set(varPsRepeatError, Blank());
+                          Set(varPsRepeatSaving, true);
+                          Set(varPsRepeatDone, 0);
+                          Set(varPsRepeatTotal, 0);
+                          IfError(
+                            ClearCollect(colPsRepeatCal, Filter(calendar, category = "holiday" || category = "company_holiday" || category = "company_leave"));
+                            ClearCollect(colPsRepeatExisting, Filter(予定, Title = varPsName));
+                            ClearCollect(
+                              colPsRepeatQueue,
+                              Filter(
+                                ForAll(
+                                  Sequence(DateDiff(startDate, endDate, TimeUnit.Days) + 1) As offset,
+                                  With(
+                                    {d: DateAdd(startDate, offset.Value - 1, TimeUnit.Days)},
+                                    With(
+                                      {k: Text(d, "yyyy-mm-dd"), repeat: LookUp(colPsRepeatDays, wd = Weekday(d, StartOfWeek.Sunday))},
+                                      With(
+                                        {
+                                          existing: If(IsBlank(repeat), Blank(), LookUp(colPsRepeatExisting, 日付 = k)),
+                                          isOff: !IsBlank(repeat) && psRepeatSkipHoliday.Checked && !IsBlank(LookUp(colPsRepeatCal, date = k))
+                                        },
+                                        {
+                                          seq: offset.Value,
+                                          dkey: k,
+                                          wt: repeat.wt,
+                                          existing: existing,
+                                          ok: !IsBlank(repeat) && !isOff &&
+                                            !(psRepeatSkipExisting.Checked && !IsBlank(existing)) &&
+                                            (!IsBlank(existing) || !IsBlank(repeat.wt))
+                                        }
+                                      )
+                                    )
+                                  )
+                                ),
+                                ok
+                              )
+                            );
+                            Set(
+                              varPsRepeatDebug,
+                              JSON(
+                                ForAll(
+                                  colPsRepeatQueue As item,
+                                  {mode: If(IsBlank(item.existing), "create", "update"), ID: item.existing.ID, 日付: item.dkey, 勤務区分: item.wt}
+                                ),
+                                JSONFormat.IndentFour
+                              )
+                            );
+                            Set(varPsRepeatTotal, CountRows(colPsRepeatQueue));
+                            If(
+                              IsEmpty(colPsRepeatQueue),
+                              Set(varPsRepeatSaving, false);
+                              Set(varPsRepeatShow, false),
+                              Set(varPsRepeatRun, true)
+                            ),
+                            Set(varPsRepeatSaving, false);
+                            Set(varPsRepeatError, "保存できませんでした: " & FirstError.Message)
+                          )
+                        )
+                    )
+                  Text: =If(varPsRepeatSaving, "保存中...", "設定")
+                  Width: =118
+                  X: =16
+                  Y: =468
+            - psRepeatClose:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =40
+                  OnSelect: =Set(varPsRepeatShow, false)
+                  Text: ="キャンセル"
+                  Width: =119
+                  X: =189
+                  Y: =468
+      - psRepeatLoadingText:
+          Control: ModernText@1.0.0
+          Properties:
+            Align: =Align.Center
+            Color: =RGBA(255, 255, 255, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =40
+            Size: =18
+            Text: ="保存中... " & varPsRepeatDone & " / " & varPsRepeatTotal
+            Visible: =varPsRepeatSaving
+            Width: =Parent.Width
+            Y: =Parent.Height / 2 - 40
+      - psRepeatProgressBg:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(255, 255, 255, 0.35)
+            Height: =10
+            Visible: =varPsRepeatSaving
+            Width: =Min(400, Parent.Width - 64)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =Parent.Height / 2 + 8
+      - psRepeatProgressBar:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =10
+            Visible: =varPsRepeatSaving
+            Width: =psRepeatProgressBg.Width * If(varPsRepeatTotal > 0, varPsRepeatDone / varPsRepeatTotal, 0)
+            X: =psRepeatProgressBg.X
+            Y: =psRepeatProgressBg.Y
+      - psRepeatTimer:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =50
+            OnTimerEnd: |-
+              =With(
+                  {batch: FirstN(colPsRepeatQueue, 10)},
+                  IfError(
+                      ForAll(
+                          batch As item,
+                          If(
+                              IsBlank(item.existing),
+                              Patch(予定, Defaults(予定), {Title: varPsName, 日付: item.dkey, 勤務区分: item.wt}),
+                              Patch(予定, item.existing, {勤務区分: item.wt})
+                          )
+                      );
+                      With({maxSeq: Max(batch, seq)}, RemoveIf(colPsRepeatQueue, seq <= maxSeq));
+                      Set(varPsRepeatDone, varPsRepeatDone + CountRows(batch)),
+                      Set(varPsRepeatRun, false);
+                      Set(varPsRepeatSaving, false);
+                      Set(varPsRepeatError, "保存できませんでした: " & FirstError.Message)
+                  )
+              );
+              If(
+                  varPsRepeatRun && IsEmpty(colPsRepeatQueue),
+                  Set(varPsRepeatRun, false);
+                  Refresh(予定);
+                  Set(varPsRepeatSaving, false);
+                  Set(varPsRepeatShow, false)
+              )
+            Repeat: =true
+            Start: =varPsRepeatRun
+            Visible: =false
+      - psRepeatDebugOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.45)
+            Height: =Parent.Height
+            OnSelect: =Set(varPsRepeatDebugShow, false)
+            Visible: =varPsRepeatDebugShow
+            Width: =Parent.Width
+      - psRepeatDebugPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =Min(Parent.Height - 24, 620)
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =varPsRepeatDebugShow
+            Width: =Min(760, Parent.Width - 24)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - psRepeatDebugHead:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =36
+                  Size: =16
+                  Text: ="Patch debug payload"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =10
+            - psRepeatDebugBody:
+                Control: ModernTextInput@1.1.2
+                Properties:
+                  AccessibleLabel: ="Patch debug payload"
+                  Default: =varPsRepeatDebug
+                  DisplayMode: =DisplayMode.View
+                  Height: =Parent.Height - 112
+                  Type: =TextInputType.Multiline
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =52
+            - psRepeatDebugClose:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =40
+                  OnSelect: =Set(varPsRepeatDebugShow, false)
+                  Text: ="閉じる"
+                  Width: =140
+                  X: =(Parent.Width - Self.Width) / 2
+                  Y: =Parent.Height - 52

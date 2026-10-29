@@ -1,0 +1,693 @@
+- gaRoot:
+    Control: GroupContainer@1.5.0
+    Variant: ManualLayout
+    Properties:
+      Fill: =RGBA(239, 244, 255, 1)
+      Height: =Parent.Height
+      Width: =Parent.Width
+    Children:
+      - gaTypes:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =10
+            Items: |-
+              =Table(
+                  {ord: 1, name: "Zoom会議・打合せ", bg: "#92D050", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 2, name: "長崎共通ID Zoom会議", bg: "#00B050", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 3, name: "来客", bg: "#FFC000", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 4, name: "設備点検・修理", bg: "#CC66FF", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 5, name: "現地工事・補修・測量、他", bg: "#00FFFF", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 6, name: "検査・立会", bg: "#E2EFDA", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 7, name: "社内教育・職場懇談会", bg: "#FF5050", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 8, name: "外部技能講習・試験・セミナー、他", bg: "#FF66FF", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 9, name: "外出・出張", bg: "#FFFF00", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 10, name: "休暇", bg: "#C5D9F1", fg: "#000000", bd: "#A9D08E"},
+                  {ord: 11, name: "年間行事", bg: "#FFFFFF00", fg: "#C00000", bd: "#FF0000"},
+                  {ord: 12, name: "その他行事", bg: "#FFFFFF", fg: "#000000", bd: "#A9D08E"}
+              )
+            Visible: =false
+            Width: =10
+      - gaRows:
+          Control: ModernText@1.0.0
+          Properties:
+            Height: =10
+            Text: |-
+              =With(
+                  {base: Coalesce(varGaDate, Today())},
+                  If(
+                      Coalesce(varGaMode, "month") = "week",
+                      1,
+                      With(
+                          {m: Date(Year(base), Month(base), 1)},
+                          RoundUp((Weekday(m, StartOfWeek.Sunday) - 1 + Day(DateAdd(DateAdd(m, 1, TimeUnit.Months), -1, TimeUnit.Days))) / 7, 0)
+                      )
+                  )
+              )
+            Visible: =false
+            Width: =10
+      - gaHeader:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            Fill: =RGBA(59, 89, 152, 1)
+            Height: =52
+            Width: =Parent.Width
+          Children:
+            - gaLogo1:
+                Control: Image@2.2.3
+                Properties:
+                  Height: =40
+                  Image: ='logo_dhf1 (1)'
+                  Width: =34
+                  X: =10
+                  Y: =6
+            - gaLogo2:
+                Control: Image@2.2.3
+                Properties:
+                  Height: =40
+                  Image: =logo_dhf2
+                  Width: =56
+                  X: =48
+                  Y: =6
+            - gaTitle:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =40
+                  Size: =17
+                  Text: ="行動予定表"
+                  Width: =140
+                  Wrap: =false
+                  X: =112
+                  Y: =6
+            - gaModeWeek:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =If(Coalesce(varGaMode, "month") = "week", ButtonAppearance.Secondary, ButtonAppearance.Subtle)
+                  Color: =If(Coalesce(varGaMode, "month") = "week", RGBA(59, 89, 152, 1), RGBA(255, 255, 255, 1))
+                  Height: =32
+                  OnSelect: =Set(varGaMode, "week")
+                  Text: ="週"
+                  Width: =48
+                  X: =(Parent.Width - 536) / 2
+                  Y: =10
+            - gaModeMonth:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =If(Coalesce(varGaMode, "month") = "month", ButtonAppearance.Secondary, ButtonAppearance.Subtle)
+                  Color: =If(Coalesce(varGaMode, "month") = "month", RGBA(59, 89, 152, 1), RGBA(255, 255, 255, 1))
+                  Height: =32
+                  OnSelect: =Set(varGaMode, "month")
+                  Text: ="月"
+                  Width: =48
+                  X: =gaModeWeek.X + gaModeWeek.Width
+                  Y: =10
+            - gaPrev:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =36
+                  OnSelect: |-
+                    =Set(
+                        varGaDate,
+                        If(
+                            Coalesce(varGaMode, "month") = "week",
+                            DateAdd(Coalesce(varGaDate, Today()), -7, TimeUnit.Days),
+                            DateAdd(Coalesce(varGaDate, Today()), -1, TimeUnit.Months)
+                        )
+                    )
+                  Text: =If(Coalesce(varGaMode, "month") = "week", "◀ 前週", "◀ 前月")
+                  Width: =70
+                  X: =gaModeMonth.X + gaModeMonth.Width + 8
+                  Y: =8
+            - gaRange:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =40
+                  Size: =15
+                  Text: |-
+                    =With(
+                        {base: Coalesce(varGaDate, Today())},
+                        If(
+                            Coalesce(varGaMode, "month") = "week",
+                            With(
+                                {ws: DateAdd(base, 1 - Weekday(base, StartOfWeek.Sunday), TimeUnit.Days)},
+                                Text(ws, "yyyy年m月d日") & " - " & Text(DateAdd(ws, 6, TimeUnit.Days), "m月d日")
+                            ),
+                            Text(base, "yyyy年m月")
+                        )
+                    )
+                  Width: =220
+                  Wrap: =false
+                  X: =gaPrev.X + gaPrev.Width + 4
+                  Y: =6
+            - gaToday:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =36
+                  OnSelect: =Set(varGaDate, Today())
+                  Text: =If(Coalesce(varGaMode, "month") = "week", "今週", "今月")
+                  Width: =60
+                  X: =gaRange.X + gaRange.Width + 4
+                  Y: =8
+            - gaNext:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =36
+                  OnSelect: |-
+                    =Set(
+                        varGaDate,
+                        If(
+                            Coalesce(varGaMode, "month") = "week",
+                            DateAdd(Coalesce(varGaDate, Today()), 7, TimeUnit.Days),
+                            DateAdd(Coalesce(varGaDate, Today()), 1, TimeUnit.Months)
+                        )
+                    )
+                  Text: =If(Coalesce(varGaMode, "month") = "week", "翌週 ▶", "翌月 ▶")
+                  Width: =70
+                  X: =gaToday.X + gaToday.Width + 4
+                  Y: =8
+            - gaBack:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =36
+                  OnSelect: =Back()
+                  Text: ="← スケジュールボード"
+                  Width: =170
+                  X: =Parent.Width - Self.Width - 10
+                  Y: =8
+            - gaAdd:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =34
+                  OnSelect: |-
+                    =Set(varGaEdit, {id: 0, date: Today(), type: "Zoom会議・打合せ", title: ""});
+                    Set(varGaDelArm, false);
+                    Set(varGaError, Blank());
+                    Set(varGaShow, true);
+                    Reset(gaEdDate);
+                    Reset(gaEdType);
+                    Reset(gaEdTitle)
+                  Text: ="＋ 予定を追加"
+                  Width: =130
+                  X: =gaBack.X - Self.Width - 8
+                  Y: =9
+            - gaRefresh:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =36
+                  Icon: ="ArrowSync"
+                  IconStyle: =IconStyle.Filled
+                  Layout: =ButtonLayout.IconOnly
+                  OnSelect: =Refresh(行動予定)
+                  Text: =""
+                  Width: =36
+                  X: =gaAdd.X - Self.Width - 8
+                  Y: =8
+      - gaGrid:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Fill: =RGBA(255, 255, 255, 1)
+            BorderColor: =RGBA(0, 0, 0, 1)
+            BorderThickness: =2
+            Height: =Parent.Height - 60
+            Items: |-
+              =With(
+                  {base: Coalesce(varGaDate, Today()), isWeek: Coalesce(varGaMode, "month") = "week"},
+                  With(
+                      {
+                          m: Date(Year(base), Month(base), 1),
+                          ws: DateAdd(base, 1 - Weekday(base, StartOfWeek.Sunday), TimeUnit.Days)
+                      },
+                      With(
+                          {
+                              off: Weekday(m, StartOfWeek.Sunday) - 1,
+                              dim: Day(DateAdd(DateAdd(m, 1, TimeUnit.Months), -1, TimeUnit.Days))
+                          },
+                          With(
+                              {
+                                  first: If(isWeek, ws, DateAdd(m, -off, TimeUnit.Days)),
+                                  n: If(isWeek, 7, RoundUp((off + dim) / 7, 0) * 7),
+                                  anchorRow: If(
+                                      isWeek,
+                                      0,
+                                      RoundDown((off + If(Year(Today()) = Year(m) && Month(Today()) = Month(m), Day(Today()), Min(Day(base), dim)) - 1) / 7, 0)
+                                  )
+                              },
+                              With(
+                                  {
+                                      sc: Filter(
+                                          行動予定,
+                                          日付 >= Text(first, "yyyy-mm-dd") &&
+                                          日付 <= Text(DateAdd(first, n - 1, TimeUnit.Days), "yyyy-mm-dd")
+                                      )
+                                  },
+                                  ForAll(
+                                      Sequence(n) As q,
+                                      With(
+                                          {d: DateAdd(first, q.Value - 1, TimeUnit.Days), c: Mod(q.Value - 1, 7)},
+                                          With(
+                                              {ds: Filter(sc, 日付 = Text(d, "yyyy-mm-dd"))},
+                                              {
+                                                  d: d,
+                                                  wd: c + 1,
+                                                  isWeek: isWeek,
+                                                  inMonth: isWeek || Month(d) = Month(m),
+                                                  isLegend: c = 0 && RoundDown((q.Value - 1) / 7, 0) = anchorRow,
+                                                  label: Concat(Split(Text(Month(d)), "") As ch, Mid("０１２３４５６７８９", Value(ch.Value) + 1, 1)) & "/" &
+                                                      Concat(Split(Text(Day(d)), "") As ch2, Mid("０１２３４５６７８９", Value(ch2.Value) + 1, 1)) & "日 (" &
+                                                      Index(["日", "月", "火", "水", "木", "金", "土"], c + 1).Value & ")",
+                                                  top: Sort(Filter(ds, 種別 <> "外出・出張" && 種別 <> "休暇"), 内容),
+                                                  bottom: ForAll(
+                                                      Distinct(Filter(ds, 種別 = "外出・出張" || 種別 = "休暇"), 内容) As t,
+                                                      LookUp(ds, 内容 = t.Value)
+                                                  )
+                                              }
+                                          )
+                                      )
+                                  )
+                              )
+                          )
+                      )
+                  )
+              )
+            ShowScrollbar: =false
+            TemplatePadding: =0
+            TemplateSize: =(Self.Height - 4) / Max(1, Value(gaRows.Text))
+            Width: =Parent.Width - 8
+            WrapCount: =7
+            X: =4
+            Y: =56
+          Children:
+            - gaCellBg:
+                Control: Rectangle@2.3.0
+                Properties:
+                  BorderColor: =RGBA(0, 0, 0, 1)
+                  BorderThickness: =1
+                  Fill: |-
+                    =If(
+                        ThisItem.isLegend, RGBA(255, 255, 255, 1),
+                        !ThisItem.inMonth, RGBA(134, 138, 147, 1),
+                        ThisItem.wd = 1, RGBA(188, 186, 186, 1),
+                        ThisItem.wd = 7, RGBA(175, 200, 225, 1),
+                        RGBA(255, 255, 255, 1)
+                    )
+                  Height: =Parent.TemplateHeight
+                  Width: =Parent.TemplateWidth
+            - gaDayLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =Switch(ThisItem.wd, 1, RGBA(186, 26, 26, 1), 7, RGBA(0, 97, 165, 1), RGBA(13, 28, 46, 1))
+                  FontWeight: =FontWeight.Bold
+                  Height: =26
+                  Size: =If(ThisItem.isWeek, 14, 12)
+                  Text: =ThisItem.label
+                  Visible: =ThisItem.inMonth && !ThisItem.isLegend
+                  Width: =Parent.TemplateWidth
+                  Wrap: =false
+                  Y: =1
+            - gaCellTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  HoverFill: =RGBA(234, 242, 255, 0.6)
+                  OnSelect: |-
+                    =Set(varGaEdit, {id: 0, date: ThisItem.d, type: "Zoom会議・打合せ", title: ""});
+                    Set(varGaDelArm, false);
+                    Set(varGaError, Blank());
+                    Set(varGaShow, true);
+                    Reset(gaEdDate);
+                    Reset(gaEdType);
+                    Reset(gaEdTitle)
+                  PressedFill: =RGBA(224, 242, 254, 0.8)
+                  Visible: =ThisItem.inMonth && !ThisItem.isLegend
+                  Width: =Parent.TemplateWidth
+            - gaTopList:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  Height: |-
+                    =Max(0, Min(
+                        CountRows(ThisItem.top) * If(ThisItem.isWeek, 44, 20),
+                        Parent.TemplateHeight - 32 - CountRows(ThisItem.bottom) * If(ThisItem.isWeek, 44, 20)
+                    ))
+                  Items: =ThisItem.top
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =If(ThisItem.isWeek, 44, 20)
+                  Visible: =ThisItem.inMonth && !ThisItem.isLegend
+                  Width: =Parent.TemplateWidth - 8
+                  X: =4
+                  Y: =28
+                Children:
+                  - gaTopCard:
+                      Control: Label@2.5.1
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =ColorValue(Coalesce(LookUp(gaTypes.AllItems, name = ThisItem.種別).bd, "#CBD5E1"))
+                        BorderThickness: =1
+                        Color: =ColorValue(Coalesce(LookUp(gaTypes.AllItems, name = ThisItem.種別).fg, "#000000"))
+                        Fill: =ColorValue(Coalesce(LookUp(gaTypes.AllItems, name = ThisItem.種別).bg, "#F1F5F9"))
+                        Font: =Font.'Segoe UI'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.TemplateHeight - 2
+                        OnSelect: |-
+                          =Set(varGaEdit, {id: ThisItem.ID, date: DateValue(ThisItem.日付), type: ThisItem.種別, title: ThisItem.内容});
+                          Set(varGaDelArm, false);
+                          Set(varGaError, Blank());
+                          Set(varGaShow, true);
+                          Reset(gaEdDate);
+                          Reset(gaEdType);
+                          Reset(gaEdTitle)
+                        PaddingBottom: =0
+                        PaddingLeft: =2
+                        PaddingRight: =2
+                        PaddingTop: =0
+                        Size: =If(Coalesce(varGaMode, "month") = "week", 10, 8)
+                        Text: =ThisItem.内容 & If(Coalesce(varGaMode, "month") = "week", Char(10) & ThisItem.種別, "")
+                        Width: =Parent.TemplateWidth
+            - gaBottomList:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  Height: =Min(CountRows(ThisItem.bottom) * If(ThisItem.isWeek, 44, 20), Parent.TemplateHeight - 32)
+                  Items: =ThisItem.bottom
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =If(ThisItem.isWeek, 44, 20)
+                  Visible: =ThisItem.inMonth && !ThisItem.isLegend
+                  Width: =Parent.TemplateWidth - 8
+                  X: =4
+                  Y: =Parent.TemplateHeight - Self.Height - 3
+                Children:
+                  - gaBottomCard:
+                      Control: Label@2.5.1
+                      Properties:
+                        Align: =Align.Center
+                        BorderColor: =ColorValue(Coalesce(LookUp(gaTypes.AllItems, name = ThisItem.種別).bd, "#CBD5E1"))
+                        BorderThickness: =1
+                        Color: =ColorValue(Coalesce(LookUp(gaTypes.AllItems, name = ThisItem.種別).fg, "#000000"))
+                        Fill: =ColorValue(Coalesce(LookUp(gaTypes.AllItems, name = ThisItem.種別).bg, "#F1F5F9"))
+                        Font: =Font.'Segoe UI'
+                        FontWeight: =FontWeight.Bold
+                        Height: =Parent.TemplateHeight - 2
+                        OnSelect: |-
+                          =Set(varGaEdit, {id: ThisItem.ID, date: DateValue(ThisItem.日付), type: ThisItem.種別, title: ThisItem.内容});
+                          Set(varGaDelArm, false);
+                          Set(varGaError, Blank());
+                          Set(varGaShow, true);
+                          Reset(gaEdDate);
+                          Reset(gaEdType);
+                          Reset(gaEdTitle)
+                        PaddingBottom: =0
+                        PaddingLeft: =2
+                        PaddingRight: =2
+                        PaddingTop: =0
+                        Size: =If(Coalesce(varGaMode, "month") = "week", 10, 8)
+                        Text: =ThisItem.内容 & If(Coalesce(varGaMode, "month") = "week", Char(10) & ThisItem.種別, "")
+                        Width: =Parent.TemplateWidth
+            - gaLegendHead:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =20
+                  Size: =If(ThisItem.isWeek, 12, 9)
+                  Text: ="凡例"
+                  Visible: =ThisItem.isLegend
+                  Width: =Parent.TemplateWidth - 8
+                  X: =4
+                  Y: =2
+            - gaLegendList:
+                Control: Gallery@2.15.0
+                Variant: Vertical
+                Properties:
+                  Height: =Parent.TemplateHeight - 26
+                  Items: =Sort(gaTypes.AllItems, ord)
+                  ShowScrollbar: =false
+                  TemplatePadding: =0
+                  TemplateSize: =Max(10, (Parent.TemplateHeight - 26) / 12)
+                  Visible: =ThisItem.isLegend
+                  Width: =Parent.TemplateWidth - 8
+                  X: =4
+                  Y: =22
+                Children:
+                  - gaLegendItem:
+                      Control: Label@2.5.1
+                      Properties:
+                        BorderColor: =ColorValue(ThisItem.bd)
+                        BorderThickness: =1
+                        Color: =ColorValue(ThisItem.fg)
+                        Fill: =ColorValue(ThisItem.bg)
+                        Font: =Font.'Segoe UI'
+                        Height: =Parent.TemplateHeight - 1
+                        PaddingBottom: =0
+                        PaddingLeft: =3
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        Size: =If(Coalesce(varGaMode, "month") = "week", 10, 7)
+                        Text: =ThisItem.name
+                        Width: =Parent.TemplateWidth
+                        Wrap: =false
+      - gaFab:
+          Control: ModernButton@1.0.0
+          Properties:
+            Appearance: =ButtonAppearance.Primary
+            Height: =56
+            OnSelect: |-
+              =Set(varGaEdit, {id: 0, date: Today(), type: "Zoom会議・打合せ", title: ""});
+              Set(varGaDelArm, false);
+              Set(varGaError, Blank());
+              Set(varGaShow, true);
+              Reset(gaEdDate);
+              Reset(gaEdType);
+              Reset(gaEdTitle)
+            Text: ="＋"
+            Width: =56
+            X: =Parent.Width - Self.Width - 32
+            Y: =Parent.Height - Self.Height - 32
+      - gaOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.5)
+            Height: =Parent.Height
+            OnSelect: =If(!varGaSaving, Set(varGaShow, false))
+            Visible: =varGaShow
+            Width: =Parent.Width
+      - gaPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =380
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Visible: =varGaShow
+            Width: =Min(560, Parent.Width - 32)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - gaEdHead:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =40
+                  Size: =16
+                  Text: =If(varGaEdit.id = 0, "予定の追加", "予定の編集")
+                  Width: =Parent.Width - 80
+                  X: =20
+                  Y: =10
+            - gaEdX:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Height: =36
+                  OnSelect: =Set(varGaShow, false)
+                  Text: ="✕"
+                  Width: =40
+                  X: =Parent.Width - Self.Width - 12
+                  Y: =12
+            - gaEdDateLbl:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(69, 71, 76, 1)
+                  Height: =22
+                  Size: =12
+                  Text: ="日付"
+                  Width: =150
+                  X: =20
+                  Y: =60
+            - gaEdDate:
+                Control: DatePicker@0.0.46
+                Properties:
+                  AccessibleLabel: ="日付"
+                  Height: =36
+                  SelectedDate: =varGaEdit.date
+                  Width: =150
+                  X: =20
+                  Y: =84
+            - gaEdTypeLbl:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(69, 71, 76, 1)
+                  Height: =22
+                  Size: =12
+                  Text: ="種別"
+                  Width: =Parent.Width - 210
+                  X: =186
+                  Y: =60
+            - gaEdType:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="種別"
+                  Default: |-
+                    ={Value: varGaEdit.type}
+                  Height: =36
+                  ItemDisplayText: =ThisItem.Value
+                  Items: |-
+                    =ForAll(Sort(gaTypes.AllItems, ord) As t, {Value: t.name})
+                  Width: =Parent.Width - 206
+                  X: =186
+                  Y: =84
+            - gaEdTitleLbl:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(69, 71, 76, 1)
+                  Height: =22
+                  Size: =12
+                  Text: ="内容"
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =132
+            - gaEdTitle:
+                Control: ModernTextInput@1.1.2
+                Properties:
+                  AccessibleLabel: ="内容"
+                  Default: =varGaEdit.title
+                  Height: =110
+                  Type: =TextInputType.Multiline
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =156
+            - gaEdError:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(186, 26, 26, 1)
+                  Height: =22
+                  Size: =11
+                  Text: =varGaError
+                  Visible: =!IsBlank(varGaError)
+                  Width: =Parent.Width - 40
+                  Wrap: =false
+                  X: =20
+                  Y: =272
+            - gaEdDelete:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(186, 26, 26, 1)
+                  DisplayMode: =If(varGaSaving, DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =40
+                  OnSelect: |-
+                    =If(
+                        !varGaDelArm,
+                        Set(varGaDelArm, true),
+                        Set(varGaSaving, true);
+                        IfError(
+                            Remove(行動予定, LookUp(行動予定, ID = varGaEdit.id));
+                            Set(varGaShow, false),
+                            Set(varGaError, "削除に失敗しました: " & FirstError.Message)
+                        );
+                        Set(varGaSaving, false)
+                    )
+                  Text: =If(varGaDelArm, "本当に削除する", "削除")
+                  Visible: =varGaEdit.id <> 0
+                  Width: =130
+                  X: =20
+                  Y: =316
+            - gaEdCancel:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =40
+                  OnSelect: =Set(varGaShow, false)
+                  Text: ="キャンセル"
+                  Width: =110
+                  X: =Parent.Width - 250
+                  Y: =316
+            - gaEdSave:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Primary
+                  DisplayMode: =If(varGaSaving, DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =40
+                  OnSelect: |-
+                    =If(
+                        IsBlank(gaEdDate.SelectedDate) || IsBlank(Trim(gaEdTitle.Text)),
+                        Set(varGaError, "日付と内容を入力してください"),
+                        Set(varGaError, Blank());
+                        Set(varGaSaving, true);
+                        With(
+                            {
+                                changes: {
+                                    Title: gaEdType.Selected.Value,
+                                    日付: Text(gaEdDate.SelectedDate, "yyyy-mm-dd"),
+                                    種別: gaEdType.Selected.Value,
+                                    内容: Trim(gaEdTitle.Text)
+                                }
+                            },
+                            IfError(
+                                If(
+                                    varGaEdit.id = 0,
+                                    Patch(行動予定, Defaults(行動予定), changes),
+                                    Patch(行動予定, LookUp(行動予定, ID = varGaEdit.id), changes)
+                                );
+                                Set(varGaShow, false),
+                                Set(varGaError, "保存に失敗しました: " & FirstError.Message)
+                            )
+                        );
+                        Set(varGaSaving, false)
+                    )
+                  Text: ="保存"
+                  Width: =110
+                  X: =Parent.Width - 130
+                  Y: =316
+      - gaSavingOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.3)
+            Height: =Parent.Height
+            Visible: =varGaSaving
+            Width: =Parent.Width
+      - gaSavingText:
+          Control: ModernText@1.0.0
+          Properties:
+            Align: =Align.Center
+            Color: =RGBA(255, 255, 255, 1)
+            FontWeight: =FontWeight.Semibold
+            Height: =40
+            Size: =18
+            Text: ="保存中..."
+            Visible: =varGaSaving
+            Width: =Parent.Width
+            Y: =(Parent.Height - Self.Height) / 2

@@ -1,0 +1,719 @@
+- spRoot:
+    Control: GroupContainer@1.5.0
+    Variant: ManualLayout
+    Properties:
+      Fill: =RGBA(245, 246, 250, 1)
+      Height: =Parent.Height
+      Width: =Parent.Width
+    Children:
+      - spDateKey:
+          Control: ModernText@1.0.0
+          Properties:
+            Height: =10
+            Text: =Text(Coalesce(varSpDate, Today()), "yyyy-mm-dd")
+            Visible: =false
+            Width: =10
+      - spBranchKey:
+          Control: ModernText@1.0.0
+          Properties:
+            Height: =10
+            Text: =Coalesce(spBranch.Selected.Value, First(Distinct(社員, ボード)).Value)
+            Visible: =false
+            Width: =10
+      - spHeader:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            Fill: =RGBA(59, 89, 152, 1)
+            Height: =85
+            Width: =Parent.Width
+          Children:
+            - spBranch:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="拠点"
+                  Default: |-
+                    ={Value: Coalesce(varSpBranch, Trim(Text(LookUp(社員, User().Email in メール.Email).ボード)), First(Distinct(社員, ボード)).Value)}
+                  Height: =36
+                  ItemDisplayText: =ThisItem.Value
+                  Items: =Distinct(社員, ボード)
+                  RadiusBottomLeft: =6
+                  RadiusBottomRight: =6
+                  RadiusTopLeft: =6
+                  RadiusTopRight: =6
+                  Size: =17
+                  Width: =Parent.Width - 16 - 44 - 6
+                  X: =8
+                  Y: =6
+            - spRefresh:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  BasePaletteColor: =RGBA(8, 222, 8, 1)
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =35
+                  Icon: ="ArrowClockwise"
+                  IconStyle: =IconStyle.Filled
+                  Layout: =ButtonLayout.IconOnly
+                  OnSelect: |-
+                    =Refresh(予定);
+                    Refresh(社員)
+                  Size: =20
+                  Text: =
+                  Width: =35
+                  X: =spBranch.X + spBranch.Width + 6
+                  Y: =6
+            - spPrev:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =30
+                  Icon: ="ArrowLeft"
+                  IconStyle: =IconStyle.Filled
+                  Layout: =ButtonLayout.IconOnly
+                  OnSelect: =Set(varSpDate, DateAdd(Coalesce(varSpDate, Today()), -1, TimeUnit.Days))
+                  Text: ="◀"
+                  Width: =30
+                  X: =8
+                  Y: =50
+            - spDateLabel:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  AutoHeight: =true
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =36
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =20
+                  Text: =Text(Coalesce(varSpDate, Today()), "yyyy/mm/dd (ddd)")
+                  Width: =spNext.X - 4 - (spPrev.X + spPrev.Width + 4)
+                  Wrap: =false
+                  X: =spPrev.X + spPrev.Width + 4
+                  Y: =50
+            - spNext:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 0, 1)
+                  Height: =36
+                  Icon: ="ArrowRight"
+                  Layout: =ButtonLayout.IconOnly
+                  OnSelect: =Set(varSpDate, DateAdd(Coalesce(varSpDate, Today()), 1, TimeUnit.Days))
+                  Size: =
+                  Text: ="▶"
+                  Width: =44
+                  X: =spToday.X - 6 - 44
+                  Y: =50
+            - spToday:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Subtle
+                  Color: =RGBA(255, 255, 255, 1)
+                  Height: =36
+                  OnSelect: =Set(varSpDate, Today())
+                  Text: ="今日"
+                  Width: =56
+                  X: =Parent.Width - 8 - 56
+                  Y: =50
+      - spCol:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =Parent.Height - 92
+            Items: |-
+              =With(
+                  {emp: Filter(社員, ボード = spBranchKey.Text), sc: Filter(予定, 日付 = spDateKey.Text), myDept: Text(LookUp(社員, User().Email in メール.Email && ボード = spBranchKey.Text).部署)},
+                  With(
+                      {d: Sort(ForAll(Distinct(emp, 部署) As x, {部署: x.Value, deptOrder: If(!IsBlank(myDept) && x.Value = myDept, -1, Min(Filter(emp, 部署 = x.Value), Value(部署順)))}), deptOrder, SortOrder.Ascending)},
+                      With(
+                          {cd: ForAll(
+                              Sequence(CountRows(d)) As s,
+                              {dept: Index(d, s.Value).部署, n: CountRows(Filter(emp, 部署 = Index(d, s.Value).部署))}
+                          )},
+                          With(
+                              {cs: ForAll(
+                                  Sequence(CountRows(cd)) As j,
+                                  {dept: Index(cd, j.Value).dept, n: Index(cd, j.Value).n, st: Coalesce(Sum(FirstN(cd, j.Value - 1), n + 1), 0)}
+                              )},
+                              ForAll(
+                                  Sequence(Coalesce(Sum(cs, n + 1), 0)) As q,
+                                  With(
+                                      {g: LookUp(cs, q.Value > st && q.Value <= st + n + 1)},
+                                      If(
+                                          q.Value - g.st = 1,
+                                          {kind: "h", dept: g.dept, name: "", wt: "", share: "", ret: "", upd: DateTime(2000, 1, 1, 0, 0, 0)},
+                                          With(
+                                              {pp: Index(Sort(Filter(emp, 部署 = g.dept), Value(表示順)), q.Value - g.st - 1)},
+                                              With(
+                                                  {r: LookUp(sc, Title = pp.Title)},
+                                                  {kind: "p", dept: g.dept, name: Text(pp.Title), wt: Text(r.勤務区分), share: Text(r.共有内容), ret: Text(r.帰社時間), upd: r.Modified}
+                                              )
+                                          )
+                                      )
+                                  )
+                              )
+                          )
+                      )
+                  )
+              )
+            ShowScrollbar: =false
+            TemplatePadding: =0
+            TemplateSize: =32
+            Width: =Parent.Width - 16
+            X: =8
+            Y: =85
+          Children:
+            - spHdrText:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(255, 255, 255, 1)
+                  Fill: =RGBA(59, 89, 152, 1)
+                  Font: =Font.'Segoe UI'
+                  FontWeight: =FontWeight.Bold
+                  Height: =25
+                  PaddingBottom: =0
+                  PaddingLeft: =10
+                  PaddingRight: =4
+                  PaddingTop: =0
+                  Size: =11
+                  Text: =ThisItem.dept
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+                  Wrap: =false
+                  Y: =Parent.TemplateHeight - 25
+            - spHdrTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =22
+                  OnSelect: |-
+                    =Set(varGsBranch, spBranchKey.Text);
+                    Set(varGsDept, Text(ThisItem.dept));
+                    Navigate(グループスケジュール);
+                    Reset(gsBranch);
+                    Reset(gsDept)
+                  PressedFill: =RGBA(255, 255, 255, 0.3)
+                  Visible: =ThisItem.kind = "h"
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - 22
+            - spRowBg:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: |-
+                    =If(
+                        !IsBlank(ThisItem.upd) && DateDiff(ThisItem.upd, Coalesce(varSpNow, Now()), TimeUnit.Minutes) < 2, RGBA(255, 241, 118, 1),
+                        Find("休暇", ThisItem.wt) > 0 || Find("休業", ThisItem.wt) > 0, RGBA(252, 228, 236, 1),
+                        Find("出張", ThisItem.wt) > 0 || Find("外出", ThisItem.wt) > 0 || Find("テレワーク", ThisItem.wt) > 0, RGBA(236, 236, 236, 1),
+                        RGBA(255, 255, 255, 1)
+                    )
+                  Height: =Parent.TemplateHeight - 1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - spSep:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(220, 224, 232, 1)
+                  Height: =1
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+                  Y: =Parent.TemplateHeight - 1
+            - spName:
+                Control: ModernText@1.0.0
+                Properties:
+                  BorderColor: =RGBA(40, 134, 222, 1)
+                  BorderStyle: =BorderStyle.None
+                  BorderThickness: =0.1
+                  Color: =RGBA(21, 101, 192, 1)
+                  FontWeight: =FontWeight.Semibold
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =ThisItem.name
+                  Visible: =ThisItem.kind = "p"
+                  Width: =76
+                  Wrap: =false
+                  X: =4
+            - spBadgeBg:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Fill: =ColorValue(Coalesce(LookUp(予定選択肢, Title = spBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).背景色, "#E8EAF6"))
+                  Height: =20
+                  RadiusBottomLeft: =6
+                  RadiusBottomRight: =6
+                  RadiusTopLeft: =6
+                  RadiusTopRight: =6
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =60
+                  X: =82
+                  Y: =(Parent.TemplateHeight - 20) / 2
+            - spBadge:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =ColorValue(Coalesce(LookUp(予定選択肢, Title = spBranchKey.Text && 種類 = "勤務区分" && 値 = ThisItem.wt).文字色, "#1F2A44"))
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  PaddingLeft: =2
+                  PaddingRight: =2
+                  Size: =11
+                  Text: =ThisItem.wt
+                  Visible: =ThisItem.kind = "p" && !IsBlank(ThisItem.wt)
+                  Width: =60
+                  Wrap: =false
+                  X: =82
+                  Y: =(Parent.TemplateHeight - 28) / 2
+            - spRet:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Right
+                  Height: =Parent.TemplateHeight - 1
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingTop: =0
+                  Size: =12
+                  Text: =If(IsBlank(ThisItem.ret), "",  ThisItem.ret)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =62
+                  Wrap: =false
+                  X: =Parent.TemplateWidth - 64
+            - spShare:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Segoe UI'
+                  Height: =Parent.TemplateHeight - 1
+                  LineHeight: =1
+                  PaddingBottom: =0
+                  PaddingLeft: =4
+                  PaddingRight: =2
+                  PaddingTop: =0
+                  Size: =8
+                  Text: =ThisItem.share
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth - 146 - 65
+                  X: =146
+            - spTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  OnSelect: |-
+                    =Set(varSpEdit, ThisItem);
+                    Set(varSpShow, true);
+                    Reset(spEdWt);
+                    Reset(spEdShare);
+                    Reset(spEdRet)
+                  PressedFill: =RGBA(59, 89, 152, 0.25)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =Parent.TemplateWidth
+            - spNameTap:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(0, 0, 0, 0)
+                  Height: =Parent.TemplateHeight
+                  OnSelect: |-
+                    =Set(varSpUserName, ThisItem.name);
+                    Set(varSpUserShow, true)
+                  PressedFill: =RGBA(25, 118, 210, 0.3)
+                  Visible: =ThisItem.kind = "p"
+                  Width: =80
+      - spOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.35)
+            Height: =Parent.Height
+            OnSelect: =Set(varSpShow, false)
+            Visible: =varSpShow
+            Width: =Parent.Width
+      - spPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =387
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =varSpShow
+            Width: =Min(360, Parent.Width - 24)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - spEdHead:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =40
+                  Size: =17
+                  Text: =varSpEdit.name & " 行先編集"
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =8
+            - spEdL1:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =28
+                  Size: =12
+                  Text: ="出社時間／共有項目"
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =52
+            - spEdWt:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="出社時間／共有項目"
+                  Default: |-
+                    ={Value: Coalesce(varSpEdit.wt, "（なし）")}
+                  Height: =36
+                  ItemDisplayText: =ThisItem.Value
+                  Items: |-
+                    =Table(
+                        {Value: "（なし）"},
+                        ForAll(Sort(Filter(予定選択肢, Title = spBranchKey.Text && 種類 = "勤務区分"), Value(表示順)) As o, {Value: o.値})
+                    )
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =82
+            - spEdL2:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =28
+                  Size: =12
+                  Text: ="共有内容（80文字まで）"
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =122
+            - spEdShare:
+                Control: ModernTextInput@1.1.2
+                Properties:
+                  AccessibleLabel: ="共有内容"
+                  Default: =varSpEdit.share
+                  Height: =64
+                  Type: =TextInputType.Multiline
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =152
+            - spEdL3:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =28
+                  Size: =12
+                  Text: ="帰社時間"
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =220
+            - spEdRet:
+                Control: ModernDropdown@1.0.3
+                Properties:
+                  AccessibleLabel: ="帰社時間"
+                  Default: |-
+                    ={Value: Coalesce(varSpEdit.ret, "（なし）")}
+                  Height: =36
+                  ItemDisplayText: =ThisItem.Value
+                  Items: |-
+                    =Table(
+                        {Value: "（なし）"},
+                        ForAll(Sort(Filter(予定選択肢, Title = spBranchKey.Text && 種類 = "帰社時間"), Value(表示順)) As o, {Value: o.値})
+                    )
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =250
+            - spEdSave:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Height: =44
+                  OnSelect: |-
+                    =If(
+                        Len(spEdShare.Text) > 80,
+                        Set(varSpToast, {msg: "共有内容は80文字以内で入力してください", ok: false}),
+                        With(
+                            {
+                                wt: If(spEdWt.Selected.Value = "（なし）", "", spEdWt.Selected.Value),
+                                rt: If(spEdRet.Selected.Value = "（なし）", "", spEdRet.Selected.Value),
+                                r: LookUp(予定, Title = varSpEdit.name && 日付 = spDateKey.Text)
+                            },
+                            IfError(
+                                If(
+                                    IsBlank(r),
+                                    Patch(予定, Defaults(予定), {Title: varSpEdit.name, 日付: spDateKey.Text, 勤務区分: wt, 共有内容: spEdShare.Text, 帰社時間: rt}),
+                                    Patch(予定, r, {勤務区分: wt, 共有内容: spEdShare.Text, 帰社時間: rt})
+                                );
+                                Refresh(予定);
+                                Refresh(社員);
+                                Set(varSpShow, false);
+                                Set(varSpToast, {msg: "保存しました", ok: true}),
+                                Set(varSpToast, {msg: "保存できませんでした: " & FirstError.Message, ok: false})
+                            )
+                        )
+                    )
+                  Text: ="保存"
+                  Width: =(Parent.Width - 52) / 2
+                  X: =20
+                  Y: =318
+            - spEdClose:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =44
+                  OnSelect: =Set(varSpShow, false)
+                  Text: ="閉じる"
+                  Width: =(Parent.Width - 52) / 2
+                  X: =Parent.Width / 2 + 6
+                  Y: =318
+      - spUsrOverlay:
+          Control: Rectangle@2.3.0
+          Properties:
+            Fill: =RGBA(0, 0, 0, 0.35)
+            Height: =Parent.Height
+            OnSelect: =Set(varSpUserShow, false)
+            Visible: =varSpUserShow
+            Width: =Parent.Width
+      - spUsrPopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            DropShadow: =DropShadow.Bold
+            Fill: =RGBA(255, 255, 255, 1)
+            Height: =320
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =varSpUserShow
+            Width: =Min(360, Parent.Width - 24)
+            X: =(Parent.Width - Self.Width) / 2
+            Y: =(Parent.Height - Self.Height) / 2
+          Children:
+            - spUsrAvatarBg:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Fill: =RGBA(59, 89, 152, 1)
+                  Height: =72
+                  RadiusBottomLeft: =36
+                  RadiusBottomRight: =36
+                  RadiusTopLeft: =36
+                  RadiusTopRight: =36
+                  Width: =72
+                  X: =20
+                  Y: =20
+            - spUsrInitial:
+                Control: ModernText@1.0.0
+                Properties:
+                  Align: =Align.Center
+                  Color: =RGBA(255, 255, 255, 1)
+                  FontWeight: =FontWeight.Bold
+                  Height: =72
+                  Size: =28
+                  Text: =Left(varSpUserName, 1)
+                  Width: =72
+                  X: =20
+                  Y: =20
+            - spUsrPhoto:
+                Control: Image@2.2.3
+                Properties:
+                  Height: =72
+                  Image: =IfError(Office365Users.UserPhoto(spUsrMail.Text), Blank())
+                  Visible: =!IsBlank(Self.Image)
+                  Width: =72
+                  X: =20
+                  Y: =20
+            - spUsrName:
+                Control: ModernText@1.0.0
+                Properties:
+                  FontWeight: =FontWeight.Bold
+                  Height: =36
+                  Size: =17
+                  Text: =varSpUserName
+                  Width: =Parent.Width - 112 - 12
+                  Wrap: =false
+                  X: =104
+                  Y: =20
+            - spUsrTitle:
+                Control: ModernText@1.0.0
+                Properties:
+                  Color: =RGBA(80, 80, 80, 1)
+                  Height: =28
+                  Size: =12
+                  Text: =Text(First(LookUp(社員, Title = varSpUserName && ボード = spBranchKey.Text).メール).JobTitle)
+                  Width: =Parent.Width - 112 - 12
+                  Wrap: =false
+                  X: =104
+                  Y: =54
+            - spUsrPhone:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(21, 101, 192, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =24
+                  OnSelect: =If(!IsBlank(spUsrBizNo.Text), Launch("tel:" & Substitute(Substitute(Substitute(spUsrBizNo.Text, "-", ""), " ", ""), "　", "")))
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =11
+                  Text: |-
+                    =With({ext: Text(LookUp(社員, Title = varSpUserName && ボード = spBranchKey.Text).内線)}, Trim(If(IsBlank(spUsrBizNo.Text), "", "☎ " & spUsrBizNo.Text) & If(IsBlank(ext), "", "　内線 " & ext)))
+                  Width: =Parent.Width - 112 - 12
+                  Wrap: =false
+                  X: =104
+                  Y: =82
+            - spUsrMobile:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(21, 101, 192, 1)
+                  Font: =Font.'Segoe UI'
+                  Height: =24
+                  OnSelect: =If(!IsBlank(spUsrMobileNo.Text), Launch("tel:" & Substitute(Substitute(Substitute(spUsrMobileNo.Text, "-", ""), " ", ""), "　", "")))
+                  PaddingBottom: =0
+                  PaddingLeft: =0
+                  PaddingRight: =0
+                  PaddingTop: =0
+                  Size: =11
+                  Text: |-
+                    =If(IsBlank(spUsrMobileNo.Text), "", "📱 " & spUsrMobileNo.Text)
+                  Width: =Parent.Width - 112 - 12
+                  Wrap: =false
+                  X: =104
+                  Y: =106
+            - spUsrMail:
+                Control: ModernText@1.0.0
+                Properties:
+                  Height: =10
+                  Text: =Text(First(LookUp(社員, Title = varSpUserName && ボード = spBranchKey.Text).メール).Email)
+                  Visible: =false
+                  Width: =10
+            - spUsrMobileNo:
+                Control: ModernText@1.0.0
+                Properties:
+                  Height: =10
+                  Text: |-
+                    =With({p: IfError(Office365ユーザー.UserProfileV2(spUsrMail.Text), Blank())}, Coalesce(p.mobilePhone, Text(LookUp(社員, Title = varSpUserName && ボード = spBranchKey.Text).電話)))
+                  Visible: =false
+                  Width: =10
+            - spUsrBizNo:
+                Control: ModernText@1.0.0
+                Properties:
+                  Height: =10
+                  Text: |-
+                    =With({p: IfError(Office365ユーザー.UserProfileV2(spUsrMail.Text), Blank())}, Text(First(p.businessPhones).Value))
+                  Visible: =false
+                  Width: =10
+            - spUsrMailBtn:
+                Control: ModernButton@1.0.0
+                Properties:
+                  DisplayMode: =If(IsBlank(spUsrMail.Text), DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =44
+                  OnSelect: =Launch("mailto:" & spUsrMail.Text & "?subject=" & EncodeUrl("【スケジュールボードからご連絡】"))
+                  Text: ="✉ メール"
+                  Width: =(Parent.Width - 52) / 2
+                  X: =20
+                  Y: =144
+            - spUsrChatBtn:
+                Control: ModernButton@1.0.0
+                Properties:
+                  DisplayMode: =If(IsBlank(spUsrMail.Text), DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =44
+                  OnSelect: =Launch("https://teams.microsoft.com/l/chat/0/0?users=" & EncodeUrl(spUsrMail.Text))
+                  Text: |-
+                    ="💬 チャット"
+                  Width: =(Parent.Width - 52) / 2
+                  X: =Parent.Width / 2 + 6
+                  Y: =144
+            - spUsrSched:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =44
+                  OnSelect: |-
+                    =Set(varPsName, varSpUserName);
+                    Set(varPsBranch, spBranchKey.Text);
+                    Set(varPsMonth, Date(Year(Coalesce(varSpDate, Today())), Month(Coalesce(varSpDate, Today())), 1));
+                    Set(varPsShow, false);
+                    Set(varSpUserShow, false);
+                    Navigate(個人スケジュール)
+                  Text: |-
+                    ="📅 個人スケジュール"
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =200
+            - spUsrClose:
+                Control: ModernButton@1.0.0
+                Properties:
+                  Appearance: =ButtonAppearance.Secondary
+                  Height: =44
+                  OnSelect: =Set(varSpUserShow, false)
+                  Text: ="閉じる"
+                  Width: =Parent.Width - 40
+                  X: =20
+                  Y: =252
+      - spToast:
+          Control: ModernText@1.0.0
+          Properties:
+            Align: =Align.Center
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =If(varSpToast.ok, RGBA(46, 125, 50, 1), RGBA(198, 40, 40, 1))
+            FontWeight: =FontWeight.Semibold
+            Height: =40
+            Size: =13
+            Text: =varSpToast.msg
+            Visible: =!IsBlank(varSpToast)
+            Width: =Parent.Width - 24
+            X: =12
+            Y: =Parent.Height - 64
+      - spToastTimer:
+          Control: Timer@2.1.0
+          Properties:
+            Duration: =2500
+            OnTimerEnd: =Set(varSpToast, Blank())
+            Start: =!IsBlank(varSpToast)
+            Visible: =false
+      - spInitTimer:
+          Control: Timer@2.1.0
+          Properties:
+            BorderThickness: =0
+            Color: =RGBA(0, 0, 0, 0)
+            Duration: =300
+            Fill: =RGBA(0, 0, 0, 0)
+            Height: =2
+            OnTimerEnd: |-
+              =Set(varSpBranch, Trim(Text(LookUp(社員, User().Email in メール.Email).ボード)));
+              Reset(spBranch)
+            Start: =!IsEmpty(社員)
+            Width: =2
+      - spAutoRefreshTimer:
+          Control: Timer@2.1.0
+          Properties:
+            AutoStart: =true
+            BorderThickness: =0
+            Color: =RGBA(0, 0, 0, 0)
+            Duration: =15000
+            Fill: =RGBA(0, 0, 0, 0)
+            Height: =2
+            OnTimerEnd: |-
+              =Set(varSpNow, Now());
+              If(
+                  !varSpShow && !varSpUserShow,
+                  ClearCollect(colSpLatest, FirstN(Sort(予定, Modified, SortOrder.Descending), 1));
+                  With(
+                      {m: First(colSpLatest).Modified},
+                      If(
+                          IsBlank(varSpLastMod),
+                          Set(varSpLastMod, m),
+                          m <> varSpLastMod,
+                          Set(varSpLastMod, m);
+                          Refresh(予定)
+                      )
+                  )
+              )
+            Repeat: =true
+            Width: =2
